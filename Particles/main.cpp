@@ -67,6 +67,9 @@ void main(){
 	planes.push_back(plane3);
 	planes.push_back(plane4);
 	planes.push_back(plane5);
+
+	glm::vec3 sphereCenter(0, 1, 0);
+	Sphere sphere(sphereCenter, 1);
 	
 	// simulation loop
 	int count = 0;
@@ -102,11 +105,7 @@ void main(){
 			std::cout << "position = " << p.getCurrentPosition().x << "  " << p.getCurrentPosition().y
 				<< "  " << p.getCurrentPosition().z << "  time = " << time << std::endl;
 			//Check for floor collisions
-
-			//=== DRAW PARTICLE
-			DrawSphere(*p.getCurrentPositionRaylib(), 0.1, GREEN);
-			//================
-
+			
 			p.setLifetime(p.getLifetime() - dt);
 
 			for (Plane plane : planes)
@@ -136,6 +135,12 @@ void main(){
 		}
 		// ==========================
 
+		//=== OBJECTS RENDERING
+		DrawSphere(*p.getCurrentPositionRaylib(), 0.1, GREEN);
+		//================
+		sphere.render();
+		//================
+		
 		DrawGrid(10, 1.0f);
 
 		EndMode3D();

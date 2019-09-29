@@ -2,7 +2,7 @@
 #define _PARTICLE_H
 
 #include <glm\glm.hpp>
-#include <raylib.h>
+#include "raylib.h"
 
 class Particle
 {

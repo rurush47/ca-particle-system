@@ -2,10 +2,12 @@
 #define _GEOMETRY_H
 
 #include <glm\glm.hpp>
+#include "raylib.h"
 
 struct Geometry{
 	virtual void setPosition(const glm::vec3& newPos) = 0;
 	virtual bool isInside(const glm::vec3& point) = 0;
+	static Vector3 glmToRaylibVec3(const glm::vec3& vec3);
 };
 
 struct Plane : public Geometry {
@@ -22,7 +24,6 @@ struct Plane : public Geometry {
 	float distPoint2Plane(const glm::vec3& point);
 	glm::vec3 closestPointInPlane(const glm::vec3& point);
 	bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
-	void render();
 };	
 
 struct Triangle : public Plane {
@@ -35,12 +36,13 @@ struct Triangle : public Plane {
 };
 
 struct Sphere : public Geometry {
-	//glm::vec3 center;
-	//float radi;
-	//Sphere(const glm::vec3& point, const float& radious);
-	//~Sphere() {};
-	//void setPosition(const glm::vec3& newPos);
-	//bool isInside(const glm::vec3& point);
+	glm::vec3 center;
+	float rad;
+	Sphere(const glm::vec3& point, const float& radius);
+	~Sphere() {}
+	void render();
+	void setPosition(const glm::vec3& newPos);
+	bool isInside(const glm::vec3& point);
 	//bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
 };
 
