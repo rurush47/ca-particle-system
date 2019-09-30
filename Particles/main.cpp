@@ -39,9 +39,9 @@ void main(){
 
 	p.setLifetime(900.0f);
 	std::cout << "Lifetime =" << p.getLifetime() << std::endl;
-	p.setBouncing(0.85f);
+	p.setBouncing(0.4);
 	p.addForce(0, -9.8f, 0);
-	p.setVelocity(10, 0, 12);
+	p.setVelocity(5, 0, 6);
 	//p.setFixed(true);
 
 	// define a floor plane for collision
@@ -68,8 +68,8 @@ void main(){
 	planes.push_back(plane4);
 	planes.push_back(plane5);
 
-	glm::vec3 sphereCenter(0, 1, 0);
-	Sphere sphere(sphereCenter, 2);
+	glm::vec3 sphereCenter(0, -4, 0);
+	Sphere sphere(sphereCenter, 6);
 	
 	// simulation loop
 	int count = 0;
@@ -102,8 +102,8 @@ void main(){
 		//PARTICLE CODE
 		if (p.getLifetime() > 0) {
 			p.updateParticle(dt, Particle::UpdateMethod::EulerOrig);
-			std::cout << "position = " << p.getCurrentPosition().x << "  " << p.getCurrentPosition().y
-				<< "  " << p.getCurrentPosition().z << "  time = " << time << std::endl;
+			//std::cout << "position = " << p.getCurrentPosition().x << "  " << p.getCurrentPosition().y
+			//	<< "  " << p.getCurrentPosition().z << "  time = " << time << std::endl;
 			//Check for floor collisions
 			
 			p.setLifetime(p.getLifetime() - dt);
@@ -113,7 +113,7 @@ void main(){
 				disact = plane.distPoint2Plane(p.getCurrentPosition());
 				if (disact < 0.0f) 
 				{
-					auto [newPos, newVelocity] = plane.getCollisionProducts(p.getCurrentPosition(), p.getVelocity());
+					auto [newPos, newVelocity] = plane.getCollisionProducts(p.getCurrentPosition(), p.getVelocity(), p.getBouncing());
 
 					p.setPosition(newPos);
 					p.setVelocity(newVelocity);
@@ -124,16 +124,16 @@ void main(){
 				}
 			}
 
-			if(sphere.isInside(p.getCurrentPosition()))
-			{
-				auto intersectionPoint = sphere.getIntersectionPoint(p.getPreviousPosition(), p.getCurrentPosition());
-				auto [newPos, newVelocity] = sphere.getCollisionProducts(p.getCurrentPosition(), p.getVelocity(), intersectionPoint);
-
-				p.setPosition(newPos);
-				p.setVelocity(newVelocity);
-
-				time = time + dt;
-			}
+			// if(sphere.isInside(p.getCurrentPosition()))
+			// {
+			// 	auto intersectionPoint = sphere.getIntersectionPoint(p.getPreviousPosition(), p.getCurrentPosition());
+			// 	auto [newPos, newVelocity] = sphere.getCollisionProducts(p.getCurrentPosition(), p.getVelocity(), intersectionPoint);
+			//
+			// 	p.setPosition(newPos);
+			// 	p.setVelocity(newVelocity);
+			//
+			// 	time = time + dt;
+			// }
 			//disant = disact;
 		}
 		// ==========================
@@ -141,7 +141,7 @@ void main(){
 		//=== OBJECTS RENDERING
 		DrawSphere(*p.getCurrentPositionRaylib(), 0.1, GREEN);
 		//================
-		sphere.render();
+		//sphere.render();
 		//================
 		
 		DrawGrid(10, 1.0f);

@@ -4,6 +4,7 @@
 #include <glm\glm.hpp>
 #include <utility>
 #include "raylib.h"
+#include "Particle.h"
 
 struct Geometry{
 	virtual void setPosition(const glm::vec3& newPos) = 0;
@@ -25,7 +26,7 @@ struct Plane : public Geometry {
 	float distPoint2Plane(const glm::vec3& point);
 	glm::vec3 closestPointInPlane(const glm::vec3& point);
 	bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
-	std::pair<glm::vec3, glm::vec3> getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity);
+	std::pair<glm::vec3, glm::vec3> getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity, const float& bouncing);
 };	
 
 struct Triangle : public Plane {
@@ -46,7 +47,7 @@ struct Sphere : public Geometry {
 	void setPosition(const glm::vec3& newPos);
 	bool isInside(const glm::vec3& point);
 	glm::vec3 getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& oldPos);
-	std::pair<glm::vec3, glm::vec3> getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity, const glm::vec3& intersectionPoint);
+	std::pair<glm::vec3, glm::vec3> getCollisionProducts(Particle& particle, const glm::vec3& intersectionPoint);
 	//bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
 };
 

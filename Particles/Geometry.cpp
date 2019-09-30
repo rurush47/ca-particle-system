@@ -1,6 +1,14 @@
 #pragma once
 #include "Geometry.h"
 #include "raylib.h"
+#include "Particle.h"
+#include <algorithm>
+#include <glm/detail/type_mat.hpp>
+#include <glm/detail/type_mat.hpp>
+#include <functional>
+#include <algorithm>
+#include <glm/detail/type_mat.hpp>
+#include <glm/detail/type_mat.hpp>
 
 //****************************************************
 // Plane
@@ -54,17 +62,17 @@ bool Plane::intersecSegment(const glm::vec3& point1, const glm::vec3& point2, gl
 	return true;
 }
 
-std::pair<glm::vec3, glm::vec3> Plane::getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity)
+std::pair<glm::vec3, glm::vec3> Plane::getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity, const float& bouncing)
 {
 	//PLANE COLLISION (proper one)
 	auto currentPos = pos;
 	auto dotOne = (glm::dot(normal, currentPos) + dconst);
-	auto newPos = currentPos - 2 * dotOne * normal;
+	auto newPos = currentPos - (1 + bouncing) * dotOne * normal;
 
-	//NEW VELOCITY proper one
+	//NEW VELOCITY (proper one)
 	auto currentVelocity = velocity;
 	auto dotVel = glm::dot(normal, currentVelocity);
-	auto newVelocity = currentVelocity - 2 * dotVel * normal;
+	auto newVelocity = currentVelocity - (1 + bouncing) * dotVel * normal;
 
 	return std::pair<glm::vec3, glm::vec3>{newPos, newVelocity};
 }
@@ -136,11 +144,11 @@ glm::vec3 Sphere::getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& 
 	return oldPos + u * vectorDelta;
 }
 
-std::pair<glm::vec3, glm::vec3> Sphere::getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity, const glm::vec3& intersectionPoint)
+std::pair<glm::vec3, glm::vec3> Sphere::getCollisionProducts(Particle& particle, const glm::vec3& intersectionPoint)
 {
 	//TODO remove plane ?
 	Plane tangentPlane(intersectionPoint, glm::normalize(intersectionPoint - center));
-	return tangentPlane.getCollisionProducts(pos, velocity);
+	return tangentPlane.getCollisionProducts(particle.getCurrentPosition(), particle.getVelocity(), particle.getBouncing());
 }
 
 //****************************************************
