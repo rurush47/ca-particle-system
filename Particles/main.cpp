@@ -69,7 +69,7 @@ void main(){
 	planes.push_back(plane5);
 
 	glm::vec3 sphereCenter(0, 1, 0);
-	Sphere sphere(sphereCenter, 1);
+	Sphere sphere(sphereCenter, 2);
 	
 	// simulation loop
 	int count = 0;
@@ -111,17 +111,9 @@ void main(){
 			for (Plane plane : planes)
 			{
 				disact = plane.distPoint2Plane(p.getCurrentPosition());
-				if (disact < 0.0f) {
-
-					//PLANE COLLISION (proper one)
-					auto currentPos = p.getCurrentPosition();
-					auto dotOne = (glm::dot(plane.normal, currentPos) + plane.dconst);
-					auto newPos = currentPos - 2 * dotOne * plane.normal;
-
-					//NEW VELOCITY proper one
-					auto currentVelocity = p.getVelocity();
-					auto dotVel = glm::dot(plane.normal, currentVelocity);
-					auto newVelocity = currentVelocity - 2 * dotVel * plane.normal;
+				if (disact < 0.0f) 
+				{
+					auto [newPos, newVelocity] = plane.getCollisionProducts(p.getCurrentPosition(), p.getVelocity());
 
 					p.setPosition(newPos);
 					p.setVelocity(newVelocity);
@@ -130,6 +122,17 @@ void main(){
 					//system("PAUSE");
 					time = time + dt; //increase time counter
 				}
+			}
+
+			if(sphere.isInside(p.getCurrentPosition()))
+			{
+				auto intersectionPoint = sphere.getIntersectionPoint(p.getPreviousPosition(), p.getCurrentPosition());
+				auto [newPos, newVelocity] = sphere.getCollisionProducts(p.getCurrentPosition(), p.getVelocity(), intersectionPoint);
+
+				p.setPosition(newPos);
+				p.setVelocity(newVelocity);
+
+				time = time + dt;
 			}
 			//disant = disact;
 		}

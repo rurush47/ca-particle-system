@@ -2,6 +2,7 @@
 #define _GEOMETRY_H
 
 #include <glm\glm.hpp>
+#include <utility>
 #include "raylib.h"
 
 struct Geometry{
@@ -24,6 +25,7 @@ struct Plane : public Geometry {
 	float distPoint2Plane(const glm::vec3& point);
 	glm::vec3 closestPointInPlane(const glm::vec3& point);
 	bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
+	std::pair<glm::vec3, glm::vec3> getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity);
 };	
 
 struct Triangle : public Plane {
@@ -43,6 +45,8 @@ struct Sphere : public Geometry {
 	void render();
 	void setPosition(const glm::vec3& newPos);
 	bool isInside(const glm::vec3& point);
+	glm::vec3 getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& oldPos);
+	std::pair<glm::vec3, glm::vec3> getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity, const glm::vec3& intersectionPoint);
 	//bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
 };
 

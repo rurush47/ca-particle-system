@@ -54,6 +54,21 @@ bool Plane::intersecSegment(const glm::vec3& point1, const glm::vec3& point2, gl
 	return true;
 }
 
+std::pair<glm::vec3, glm::vec3> Plane::getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity)
+{
+	//PLANE COLLISION (proper one)
+	auto currentPos = pos;
+	auto dotOne = (glm::dot(normal, currentPos) + dconst);
+	auto newPos = currentPos - 2 * dotOne * normal;
+
+	//NEW VELOCITY proper one
+	auto currentVelocity = velocity;
+	auto dotVel = glm::dot(normal, currentVelocity);
+	auto newVelocity = currentVelocity - 2 * dotVel * normal;
+
+	return std::pair<glm::vec3, glm::vec3>{newPos, newVelocity};
+}
+
 // void Plane::render()
 // {
 // 	auto point1 = normal*dconst
@@ -89,7 +104,43 @@ void Sphere::setPosition(const glm::vec3& newPos)
 
 bool Sphere::isInside(const glm::vec3& point)
 {
-	return false;
+	return glm::dot(point - center, point - center) <= rad * rad;
+}
+
+glm::vec3 Sphere::getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& oldPos)
+{
+	auto vectorDelta = dtPos - oldPos;
+	auto a = glm::dot(vectorDelta, vectorDelta);
+	auto b = glm::dot(vectorDelta * 2.0f, (oldPos - center));
+	auto c = glm::dot(center, center) + glm::dot(oldPos, oldPos)
+		- glm::dot(2.0f * oldPos, center) - rad * rad;
+
+	//u is an alpha from the course slides
+	auto u1 = (-b + glm::sqrt(b * b - 4 * a * c)) / 2 * a;
+	auto u2 = (-b - glm::sqrt(b * b - 4 * a * c)) / 2 * a;
+	float u;
+
+	if(u1 >= 0 && u1 <= 1)
+	{
+		u = u1;
+	}
+	else if(u2 >= 0 && u2 <= 1)
+	{
+		u = u2;
+	}
+	else
+	{
+		throw "Segment doesn't intersect the sphere! sCheck the collision detection code!";
+	}
+
+	return oldPos + u * vectorDelta;
+}
+
+std::pair<glm::vec3, glm::vec3> Sphere::getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity, const glm::vec3& intersectionPoint)
+{
+	//TODO remove plane ?
+	Plane tangentPlane(intersectionPoint, glm::normalize(intersectionPoint - center));
+	return tangentPlane.getCollisionProducts(pos, velocity);
 }
 
 //****************************************************
