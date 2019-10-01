@@ -25,17 +25,21 @@ struct Plane : public Geometry {
 	bool isInside(const glm::vec3& point);
 	float distPoint2Plane(const glm::vec3& point);
 	glm::vec3 closestPointInPlane(const glm::vec3& point);
-	bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
+	virtual bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
 	std::pair<glm::vec3, glm::vec3> getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity, const float& bouncing);
 };	
 
-struct Triangle : public Plane {
-	//glm::vec3 vertex1, vertex2, vertex3;
-	//Triangle(const glm::vec3& point0, const glm::vec3& point1, const glm::vec3& point2);
-	//~Triangle() {};
-	//void setPosition(const glm::vec3& newPos);
-	//bool isInside(const glm::vec3& point);
-	//bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
+struct Triangle : public Plane
+{
+	glm::vec3 vertex1, vertex2, vertex3;
+	Triangle(const glm::vec3& point0, const glm::vec3& point1, const glm::vec3& point2);
+	~Triangle() {};
+
+	void render();
+	void setPosition(const glm::vec3& newPos);
+	bool isInside(const glm::vec3& onPlanePoint);
+	bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
+	float getBarycentricProduct(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3);
 };
 
 struct Sphere : public Geometry {

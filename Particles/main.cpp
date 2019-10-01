@@ -39,9 +39,9 @@ void main(){
 
 	p.setLifetime(900.0f);
 	std::cout << "Lifetime =" << p.getLifetime() << std::endl;
-	p.setBouncing(0.4);
+	p.setBouncing(0.9);
 	p.addForce(0, -9.8f, 0);
-	p.setVelocity(5, 0, 6);
+	p.setVelocity(-5, 0, -1);
 	//p.setFixed(true);
 
 	// define a floor plane for collision
@@ -68,12 +68,17 @@ void main(){
 	planes.push_back(plane4);
 	planes.push_back(plane5);
 
-	glm::vec3 sphereCenter(0, -4, 0);
+	glm::vec3 sphereCenter(-5, -4, 0);
 	Sphere sphere(sphereCenter, 6);
+
+	glm::vec3 triangleV1(0, 7, 5);
+	glm::vec3 triangleV2(0, 0, -5);
+	glm::vec3 triangleV3(0, 0, 0);
+	Triangle triangle(triangleV1, triangleV2, triangleV3);
 	
 	// simulation loop
 	int count = 0;
-	float disact, disant;
+	float distance, disant;
 	float time = tini;
 
 	// Main game loop
@@ -86,6 +91,10 @@ void main(){
 		if (IsKeyDown('Z')) camera.target = *new Vector3{ 0.0f, 0.0f, 0.0f };
 		
 		if (IsKeyDown('X'))
+		{
+			p.addForce(0.2, 0, 0);
+		}
+		if (IsKeyDown('C'))
 		{
 			p.addForce(0.2, 0, 0);
 		}
@@ -110,8 +119,8 @@ void main(){
 
 			for (Plane plane : planes)
 			{
-				disact = plane.distPoint2Plane(p.getCurrentPosition());
-				if (disact < 0.0f) 
+				distance = plane.distPoint2Plane(p.getCurrentPosition());
+				if (distance < 0.0f) 
 				{
 					auto [newPos, newVelocity] = plane.getCollisionProducts(p.getCurrentPosition(), p.getVelocity(), p.getBouncing());
 
@@ -127,14 +136,27 @@ void main(){
 			// if(sphere.isInside(p.getCurrentPosition()))
 			// {
 			// 	auto intersectionPoint = sphere.getIntersectionPoint(p.getPreviousPosition(), p.getCurrentPosition());
-			// 	auto [newPos, newVelocity] = sphere.getCollisionProducts(p.getCurrentPosition(), p.getVelocity(), intersectionPoint);
+			// 	auto [newPos, newVelocity] = sphere.getCollisionProducts(p, intersectionPoint);
 			//
 			// 	p.setPosition(newPos);
 			// 	p.setVelocity(newVelocity);
 			//
 			// 	time = time + dt;
 			// }
-			//disant = disact;
+
+			std::cout << triangle.isInside(p.getCurrentPosition()) << std::endl;
+			glm::vec3 intersectionVec;
+			bool isIntersecting = triangle.intersecSegment(p.getPreviousPosition(), p.getCurrentPosition(), intersectionVec);
+			if (isIntersecting && triangle.isInside(intersectionVec))
+			{
+				auto [newPos, newVelocity] = triangle.getCollisionProducts(p.getCurrentPosition(), p.getVelocity(), p.getBouncing());
+			
+				p.setPosition(newPos);
+				p.setVelocity(newVelocity);
+			
+				time = time + dt;
+			}
+			 //disant = disact;
 		}
 		// ==========================
 
@@ -142,10 +164,13 @@ void main(){
 		DrawSphere(*p.getCurrentPositionRaylib(), 0.1, GREEN);
 		//================
 		//sphere.render();
+		triangle.render();
 		//================
-		
-		DrawGrid(10, 1.0f);
 
+		//DRAW SCENE BOUNDS
+		DrawGrid(10, 1.0f);
+		DrawCubeWires(Vector3{ 0, 5, 0 }, 10, 10, 10, GOLD);
+		
 		EndMode3D();
 
 		DrawRectangle(10, 10, 320, 133, Fade(SKYBLUE, 0.5f));

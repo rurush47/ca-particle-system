@@ -2,13 +2,9 @@
 #include "Geometry.h"
 #include "raylib.h"
 #include "Particle.h"
-#include <algorithm>
-#include <glm/detail/type_mat.hpp>
-#include <glm/detail/type_mat.hpp>
 #include <functional>
-#include <algorithm>
-#include <glm/detail/type_mat.hpp>
-#include <glm/detail/type_mat.hpp>
+
+#define FLOAT_ZERO_COMPARISON_ERROR 0.01f
 
 //****************************************************
 // Plane
@@ -75,6 +71,53 @@ std::pair<glm::vec3, glm::vec3> Plane::getCollisionProducts(const glm::vec3& pos
 	auto newVelocity = currentVelocity - (1 + bouncing) * dotVel * normal;
 
 	return std::pair<glm::vec3, glm::vec3>{newPos, newVelocity};
+}
+
+Triangle::Triangle(const glm::vec3& point0, const glm::vec3& point1, const glm::vec3& point2)
+{
+	vertex1 = point0;
+	vertex2 = point1;
+	vertex3 = point2;
+
+	normal = glm::normalize(glm::cross(vertex2 - vertex1, vertex3 - vertex1));
+	dconst = -glm::dot(normal, vertex1);
+}
+
+void Triangle::render()
+{
+	DrawLine3D(glmToRaylibVec3(vertex1), glmToRaylibVec3(vertex2), BLUE);
+	DrawLine3D(glmToRaylibVec3(vertex2), glmToRaylibVec3(vertex3), BLUE);
+	DrawLine3D(glmToRaylibVec3(vertex3), glmToRaylibVec3(vertex1), BLUE);
+}
+
+void Triangle::setPosition(const glm::vec3& newPos)
+{
+	//TODO implement
+}
+
+bool Triangle::isInside(const glm::vec3& onPlanePoint)
+{
+	float barycentricValue =
+		getBarycentricProduct(onPlanePoint, vertex2, vertex3) +
+		getBarycentricProduct(vertex1, onPlanePoint, vertex3) +
+		getBarycentricProduct(vertex1, vertex2, onPlanePoint) -
+		getBarycentricProduct(vertex1, vertex2, vertex3);
+
+	bool inside = glm::abs(barycentricValue) < FLOAT_ZERO_COMPARISON_ERROR;
+	return inside;
+}
+
+bool Triangle::intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall)
+{
+	return Plane::intersecSegment(point1, point2, pTall);
+}
+
+float Triangle::getBarycentricProduct(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3)
+{
+	auto cross = glm::cross(v2 - v1, v3 - v1);
+	auto length = glm::length(cross);
+	auto val = length / 2.0f;
+	return val;
 }
 
 // void Plane::render()
