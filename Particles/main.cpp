@@ -68,16 +68,17 @@ void main(){
 	planes.push_back(plane4);
 	planes.push_back(plane5);
 
-	glm::vec3 sphereCenter(-5, -4, 0);
+	glm::vec3 sphereCenter(-5, -3, 0);
 	Sphere sphere(sphereCenter, 6);
 
-	glm::vec3 triangleV1(0, 7, 5);
-	glm::vec3 triangleV2(0, 0, -5);
-	glm::vec3 triangleV3(0, 0, 0);
+	glm::vec3 triangleV1(5, 0, 0);
+	glm::vec3 triangleV2(5, 5, -5);
+	glm::vec3 triangleV3(0, 0, -5);
 	Triangle triangle(triangleV1, triangleV2, triangleV3);
 	
 	// simulation loop
 	int count = 0;
+	bool collides;
 	float distance, disant;
 	float time = tini;
 
@@ -105,65 +106,61 @@ void main(){
 		BeginDrawing();
 
 		ClearBackground(RAYWHITE);
-
+		
 		BeginMode3D(camera);
 
 		//PARTICLE CODE
-		if (p.getLifetime() > 0) {
+		if (p.getLifetime() > 0) 
+		{
 			p.updateParticle(dt, Particle::UpdateMethod::EulerOrig);
-			//std::cout << "position = " << p.getCurrentPosition().x << "  " << p.getCurrentPosition().y
-			//	<< "  " << p.getCurrentPosition().z << "  time = " << time << std::endl;
-			//Check for floor collisions
-			
+
 			p.setLifetime(p.getLifetime() - dt);
 
 			for (Plane plane : planes)
 			{
-				distance = plane.distPoint2Plane(p.getCurrentPosition());
-				if (distance < 0.0f) 
+				auto oldPos = p.getPreviousPosition();
+				auto dtPos = p.getCurrentPosition();
+				
+				collides = plane.collides(oldPos, dtPos);
+				if (collides) 
 				{
-					auto [newPos, newVelocity] = plane.getCollisionProducts(p.getCurrentPosition(), p.getVelocity(), p.getBouncing());
+					auto [newPos, newVelocity] = plane.getCollisionProducts(dtPos, p.getVelocity(), p.getBouncing());
 
 					p.setPosition(newPos);
 					p.setVelocity(newVelocity);
+					
 					std::cout << "Bounce = " << count++ << std::endl;
-					//disact = -disact; //
-					//system("PAUSE");
-					time = time + dt; //increase time counter
 				}
 			}
 
-			// if(sphere.isInside(p.getCurrentPosition()))
-			// {
-			// 	auto intersectionPoint = sphere.getIntersectionPoint(p.getPreviousPosition(), p.getCurrentPosition());
-			// 	auto [newPos, newVelocity] = sphere.getCollisionProducts(p, intersectionPoint);
-			//
-			// 	p.setPosition(newPos);
-			// 	p.setVelocity(newVelocity);
-			//
-			// 	time = time + dt;
-			// }
+			if(sphere.isInside(p.getCurrentPosition()))
+			{
+				auto intersectionPoint = sphere.getIntersectionPoint(p.getPreviousPosition(), p.getCurrentPosition());
+				auto [newPos, newVelocity] = sphere.getCollisionProducts(p, intersectionPoint);
+			
+				p.setPosition(newPos);
+				p.setVelocity(newVelocity);
+			}
 
-			std::cout << triangle.isInside(p.getCurrentPosition()) << std::endl;
 			glm::vec3 intersectionVec;
 			bool isIntersecting = triangle.intersecSegment(p.getPreviousPosition(), p.getCurrentPosition(), intersectionVec);
 			if (isIntersecting && triangle.isInside(intersectionVec))
 			{
 				auto [newPos, newVelocity] = triangle.getCollisionProducts(p.getCurrentPosition(), p.getVelocity(), p.getBouncing());
-			
+
 				p.setPosition(newPos);
 				p.setVelocity(newVelocity);
-			
-				time = time + dt;
 			}
-			 //disant = disact;
+
+			//UPDATE DELTA TIME	
+			time = time + dt;
 		}
 		// ==========================
 
 		//=== OBJECTS RENDERING
 		DrawSphere(*p.getCurrentPositionRaylib(), 0.1, GREEN);
 		//================
-		//sphere.render();
+		sphere.render();
 		triangle.render();
 		//================
 
