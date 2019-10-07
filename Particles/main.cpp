@@ -31,14 +31,17 @@ void main(){
 	SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
 
 
-	//=== PARTICLE CONSTS ===
+	//=== CONSTS ===
 	float dt = 0.01f;  //simulation time
 	float tini = 0.0f; 
-	float tfinal = 9000; //final time of simulation 
+	//=========================
 
+	//=== INIT PARTICLES MANAGER ===
 	std::shared_ptr<std::vector<Particle>> particles(new std::vector<Particle>);
 	ParticleManager ps(0.05f, particles);
-
+	auto particleModel = LoadModelFromMesh(GenMeshSphere(0.05f, 6, 6));
+	//==============================
+	
 	//=== DEFINE PLANE BOX ==========
 	glm::vec3 punt1(0, 0, 0);
 	glm::vec3 punt2(5, 0, 0);
@@ -129,7 +132,7 @@ void main(){
 			{
 				auto intersectionPoint = sphere.getIntersectionPoint(_pa.getPreviousPosition(), _pa.getCurrentPosition());
 				auto [newPos, newVelocity] = sphere.getCollisionProducts(_pa, intersectionPoint);
-
+			
 				_pa.setPosition(newPos);
 				_pa.setVelocity(newVelocity);
 			}
@@ -141,14 +144,14 @@ void main(){
 			if (isIntersecting && triangle.isInside(intersectionVec))
 			{
 				auto [newPos, newVelocity] = triangle.getCollisionProducts(_pa.getCurrentPosition(), _pa.getVelocity(), _pa.getBouncing());
-
+			
 				_pa.setPosition(newPos);
 				_pa.setVelocity(newVelocity);
 			}
 			//==========================
 
 			//=== PARTICLE RENDER ===
-			_pa.render();
+			_pa.render(particleModel);
 			//========================
 		}
 		

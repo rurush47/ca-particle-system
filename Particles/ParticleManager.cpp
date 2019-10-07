@@ -29,7 +29,7 @@ void ParticleManager::update(const float& dt)
 	for (auto it = m_particles->begin(); it != m_particles->end(); ++it)
 	{
 		it->setLifetime(it->getLifetime() - dt);
-		it->updateParticle(dt);
+		it->updateParticle(dt, Particle::UpdateMethod::EulerOrig);
 	}
 
 	m_particles->erase(std::remove_if(m_particles->begin(), m_particles->end(),
@@ -40,7 +40,7 @@ void ParticleManager::spawnParticle()
 {
 	Particle newParticle(0 , 5, 0);
 
-	newParticle.setLifetime(3);
+	newParticle.setLifetime(5);
 	newParticle.setBouncing(0.9);
 	newParticle.addForce(0, -9.8f, 0);
 	newParticle.setVelocity(

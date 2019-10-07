@@ -13,5 +13,6 @@ public:
 	float m_particleSpawnOffset;
 	float m_currentOffset = 0;
 	const std::shared_ptr<std::vector<Particle>>& m_particles;
+	Model m_particleModel;
 };
 

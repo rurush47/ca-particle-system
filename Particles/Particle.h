@@ -40,7 +40,7 @@ public:
 	void addForce(glm::vec3 force);
 	void addForce(const float& x, const float& y, const float& z);
 	void updateParticle(const float& dt, UpdateMethod method = UpdateMethod::EulerOrig);
-	void render();
+	void render(const Model& model);
 
 
 private:

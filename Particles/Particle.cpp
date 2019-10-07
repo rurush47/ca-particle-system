@@ -154,12 +154,17 @@ void Particle::updateParticle(const float& dt, UpdateMethod method)
 			break;
 		case UpdateMethod::EulerSemi:
 		{
-									 // to be implemented
+			m_previousPosition = m_currentPosition;
+			m_velocity += m_force*dt;
+			m_currentPosition += m_velocity*dt;
 		}
 			break;
 		case UpdateMethod::Verlet:
 		{
-									 // to be implemented
+			m_previousPosition = m_currentPosition;
+			const auto oldVelocity = m_velocity;
+			m_velocity += m_force * dt;
+			m_currentPosition += (oldVelocity + m_velocity) * 0.5f * dt;
 		}
 			break;
 		}
@@ -167,7 +172,7 @@ void Particle::updateParticle(const float& dt, UpdateMethod method)
 	return;
 }
 
-void Particle::render()
+void Particle::render(const Model& model)
 {
-	DrawSphere(Geometry::glmToRaylibVec3(m_currentPosition), 0.05f, GREEN);
+	DrawModel(model, Geometry::glmToRaylibVec3(m_currentPosition), 1, GREEN);
 }
