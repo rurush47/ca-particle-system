@@ -3,6 +3,8 @@
 #include "Particle.h"
 #include "Geometry.h"
 #include "raylib.h"
+#include "ParticleSpawner.h"
+#include <string>
 
 void main(){
 
@@ -28,23 +30,16 @@ void main(){
 
 	SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
 
-	//======
 
 	//=== PARTICLE CONSTS ===
 	float dt = 0.01f;  //simulation time
 	float tini = 0.0f; 
 	float tfinal = 9000; //final time of simulation 
-	// particle inicialization
-	Particle p(0.0f, 5.0f, 0.0f); //initial position of the particle
 
-	p.setLifetime(900.0f);
-	std::cout << "Lifetime =" << p.getLifetime() << std::endl;
-	p.setBouncing(0.9);
-	p.addForce(0, -9.8f, 0);
-	p.setVelocity(-5, 0, -1);
-	//p.setFixed(true);
+	std::shared_ptr<std::vector<Particle>> particles(new std::vector<Particle>);
+	ParticleSpawner ps(1, particles);
 
-	// define a floor plane for collision
+	//=== DEFINE PLANE BOX ==========
 	glm::vec3 punt1(0, 0, 0);
 	glm::vec3 punt2(5, 0, 0);
 	glm::vec3 punt3(-5, 0, 0);
@@ -60,26 +55,29 @@ void main(){
 	Plane plane3(punt3, normal3);
 	Plane plane4(punt4, normal4);
 	Plane plane5(punt5, normal5);
-
 	std::vector<Plane> planes;
 	planes.push_back(plane1);
 	planes.push_back(plane2);
 	planes.push_back(plane3);
 	planes.push_back(plane4);
 	planes.push_back(plane5);
+	//===============================
 
+	//=== DEFINE SPHERE ==============
 	glm::vec3 sphereCenter(-5, -3, 0);
 	Sphere sphere(sphereCenter, 6);
+	//================================
 
+	//=== DEFINE TRIANGLE=============
 	glm::vec3 triangleV1(5, 0, 0);
 	glm::vec3 triangleV2(5, 5, -5);
 	glm::vec3 triangleV3(0, 0, -5);
 	Triangle triangle(triangleV1, triangleV2, triangleV3);
+	//================================
 	
 	// simulation loop
 	int count = 0;
 	bool collides;
-	float distance, disant;
 	float time = tini;
 
 	// Main game loop
@@ -90,15 +88,7 @@ void main(){
 		UpdateCamera(&camera);          // Update camera
 
 		if (IsKeyDown('Z')) camera.target = *new Vector3{ 0.0f, 0.0f, 0.0f };
-		
-		if (IsKeyDown('X'))
-		{
-			p.addForce(0.2, 0, 0);
-		}
-		if (IsKeyDown('C'))
-		{
-			p.addForce(0.2, 0, 0);
-		}
+	
 		//----------------------------------------------------------------------------------
 
 		// Draw
@@ -110,61 +100,75 @@ void main(){
 		BeginMode3D(camera);
 
 		//PARTICLE CODE
-		if (p.getLifetime() > 0) 
+
+		for (Particle& _pa : *particles.get())
 		{
-			p.updateParticle(dt, Particle::UpdateMethod::EulerOrig);
+			//=== UPDATE PARTICLE ====
+			_pa.updateParticle(dt, Particle::UpdateMethod::EulerOrig);
+			_pa.setLifetime(_pa.getLifetime() - dt);
+			//========================
 
-			p.setLifetime(p.getLifetime() - dt);
-
-			for (Plane plane : planes)
+			//=== PLANES COLLISION ===
+			for (Plane& plane : planes)
 			{
-				auto oldPos = p.getPreviousPosition();
-				auto dtPos = p.getCurrentPosition();
-				
-				collides = plane.collides(oldPos, dtPos);
-				if (collides) 
-				{
-					auto [newPos, newVelocity] = plane.getCollisionProducts(dtPos, p.getVelocity(), p.getBouncing());
+				auto oldPos = _pa.getPreviousPosition();
+				auto dtPos = _pa.getCurrentPosition();
 
-					p.setPosition(newPos);
-					p.setVelocity(newVelocity);
-					
+				collides = plane.collides(oldPos, dtPos);
+				if (collides)
+				{
+					auto [newPos, newVelocity] = plane.getCollisionProducts(dtPos, _pa.getVelocity(), _pa.getBouncing());
+
+					_pa.setPosition(newPos);
+					_pa.setVelocity(newVelocity);
+
 					std::cout << "Bounce = " << count++ << std::endl;
 				}
 			}
+			//=========================
 
-			if(sphere.isInside(p.getCurrentPosition()))
+			//=== SPHERE COLLISION ===
+			if (sphere.isInside(_pa.getCurrentPosition()))
 			{
-				auto intersectionPoint = sphere.getIntersectionPoint(p.getPreviousPosition(), p.getCurrentPosition());
-				auto [newPos, newVelocity] = sphere.getCollisionProducts(p, intersectionPoint);
-			
-				p.setPosition(newPos);
-				p.setVelocity(newVelocity);
-			}
+				auto intersectionPoint = sphere.getIntersectionPoint(_pa.getPreviousPosition(), _pa.getCurrentPosition());
+				auto [newPos, newVelocity] = sphere.getCollisionProducts(_pa, intersectionPoint);
 
+				_pa.setPosition(newPos);
+				_pa.setVelocity(newVelocity);
+			}
+			//=========================
+
+			//=== TRIANGLE COLLISION ===
 			glm::vec3 intersectionVec;
-			bool isIntersecting = triangle.intersecSegment(p.getPreviousPosition(), p.getCurrentPosition(), intersectionVec);
+			bool isIntersecting = triangle.intersecSegment(_pa.getPreviousPosition(), _pa.getCurrentPosition(), intersectionVec);
 			if (isIntersecting && triangle.isInside(intersectionVec))
 			{
-				auto [newPos, newVelocity] = triangle.getCollisionProducts(p.getCurrentPosition(), p.getVelocity(), p.getBouncing());
+				auto [newPos, newVelocity] = triangle.getCollisionProducts(_pa.getCurrentPosition(), _pa.getVelocity(), _pa.getBouncing());
 
-				p.setPosition(newPos);
-				p.setVelocity(newVelocity);
+				_pa.setPosition(newPos);
+				_pa.setVelocity(newVelocity);
 			}
+			//==========================
 
-			//UPDATE DELTA TIME	
-			time = time + dt;
+			//=== PARTICLE RENDER ===
+			DrawSphere(*_pa.getCurrentPositionRaylib(), 0.1, GREEN);
+			//========================
 		}
+		
+		//UPDATE DELTA TIME	
+		time = time + dt;
 		// ==========================
 
+		//===UPDATE OTHER OBJECTS===
+		ps.update(dt);
+		//==========================
+
 		//=== OBJECTS RENDERING
-		DrawSphere(*p.getCurrentPositionRaylib(), 0.1, GREEN);
-		//================
 		sphere.render();
 		triangle.render();
 		//================
 
-		//DRAW SCENE BOUNDS
+		//DRAW SCENE BOUNDS------------------------------------------------------------------
 		DrawGrid(10, 1.0f);
 		DrawCubeWires(Vector3{ 0, 5, 0 }, 10, 10, 10, GOLD);
 		
@@ -187,5 +191,4 @@ void main(){
 	// De-Initialization
 	//--------------------------------------------------------------------------------------
 	CloseWindow();        // Close window and OpenGL context
-	
 }

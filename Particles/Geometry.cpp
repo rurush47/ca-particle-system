@@ -243,7 +243,12 @@ glm::vec3 Sphere::getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& 
 	auto u2 = (-b - glm::sqrt(b * b - 4 * a * c)) / 2 * a;
 	float u;
 
-	if(u1 >= 0 && u1 <= 1)
+	if (u1 >= 0 && u1 <= 1 &&
+		u2 >= 0 && u2 <= 1)
+	{
+		u = glm::min(u1, u2);
+	}
+	else if(u1 >= 0 && u1 <= 1)
 	{
 		u = u1;
 	}
