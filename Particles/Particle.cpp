@@ -1,5 +1,6 @@
 #include "Particle.h"
 #include <raylib.h>
+#include "Geometry.h"
 
 
 Particle::Particle()
@@ -12,7 +13,6 @@ m_previousPosition(0, 0, 0), m_velocity(0, 0, 0), m_force(0, 0, 0), m_bouncing(1
 	m_currentPosition.x = x;
 	m_currentPosition.y = y;
 	m_currentPosition.z = z;
-
 }
 
 /*
@@ -165,4 +165,9 @@ void Particle::updateParticle(const float& dt, UpdateMethod method)
 		}
 	}
 	return;
+}
+
+void Particle::render()
+{
+	DrawSphere(Geometry::glmToRaylibVec3(m_currentPosition), 0.05f, GREEN);
 }

@@ -14,6 +14,11 @@ Vector3 Geometry::glmToRaylibVec3(const glm::vec3& vec3)
 	return Vector3{ vec3.x, vec3.y, vec3.z };
 }
 
+float Geometry::getRandomFloat(const float& minVal, const float& maxVal)
+{
+	return minVal + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxVal - minVal)));
+}
+
 Plane::Plane(const glm::vec3& point, const glm::vec3& normalVect){
 	normal = glm::normalize(normalVect);
 	dconst = -glm::dot(point, normal);

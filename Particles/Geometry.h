@@ -16,6 +16,7 @@ struct Geometry{
 	virtual void setPosition(const glm::vec3& newPos) = 0;
 	virtual bool isInside(const glm::vec3& point) = 0;
 	static Vector3 glmToRaylibVec3(const glm::vec3& vec3);
+	static float getRandomFloat(const float& minVal, const float& maxVal);
 	Mesh genCustomTriangleMesh(const std::vector<Vector3>& customVertices, const int& sides, const float& radius);
 };
 
