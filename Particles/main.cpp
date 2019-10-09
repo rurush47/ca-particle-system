@@ -28,17 +28,18 @@ void main(){
 
 	SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
 
-	SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
+	int targetFPS = 60;
+	SetTargetFPS(targetFPS);                   // Set our game to run at 60 frames-per-second
 
 
 	//=== CONSTS ===
-	float dt = 0.01f;  //simulation time
+	float dt = 0.01;  //simulation time
 	float tini = 0.0f; 
 	//=========================
 
 	//=== INIT PARTICLES MANAGER ===
 	std::shared_ptr<std::vector<Particle>> particles(new std::vector<Particle>);
-	ParticleManager ps(0.05f, particles);
+	ParticleManager ps(0.02f, particles);
 	auto particleModel = LoadModelFromMesh(GenMeshSphere(0.05f, 6, 6));
 	//==============================
 	
@@ -65,9 +66,12 @@ void main(){
 	planes.push_back(plane4);
 	planes.push_back(plane5);
 	//===============================
-
+	
+	auto mPos = plane4.getMirrorPoint(glm::vec3(0, 5, 0));
+	std::cout << std::to_string(mPos.x) + " " + std::to_string(mPos.y) + " " + std::to_string(mPos.z) << std::endl;
+	
 	//=== DEFINE SPHERE ==============
-	glm::vec3 sphereCenter(-5, -3, 0);
+	glm::vec3 sphereCenter(-6, -3, 0);
 	Sphere sphere(sphereCenter, 6);
 	//================================
 
@@ -102,62 +106,44 @@ void main(){
 		
 		BeginMode3D(camera);
 
-		//===UPDATE OTHER OBJECTS===
+		//===UPDATE PARTICLES===
 		ps.update(dt);
-		//==========================
+		//======================
 		
-		for (Particle& _pa : *particles.get())
+		for (Particle& particle : *particles.get())
 		{
 			//========================
 
 			//=== PLANES COLLISION ===
 			for (Plane& plane : planes)
 			{
-				auto oldPos = _pa.getPreviousPosition();
-				auto dtPos = _pa.getCurrentPosition();
-
-				collides = plane.collides(oldPos, dtPos);
-				if (collides)
+				if (plane.collides(particle))
 				{
-					auto [newPos, newVelocity] = plane.getCollisionProducts(dtPos, _pa.getVelocity(), _pa.getBouncing());
-
-					_pa.setPosition(newPos);
-					_pa.setVelocity(newVelocity);
+					plane.collide(particle);
 				}
 			}
 			//=========================
 
 			//=== SPHERE COLLISION ===
-			if (sphere.isInside(_pa.getCurrentPosition()))
+			if (sphere.isInside(particle.getCurrentPosition()))
 			{
-				auto intersectionPoint = sphere.getIntersectionPoint(_pa.getPreviousPosition(), _pa.getCurrentPosition());
-				auto [newPos, newVelocity] = sphere.getCollisionProducts(_pa, intersectionPoint);
-			
-				_pa.setPosition(newPos);
-				_pa.setVelocity(newVelocity);
+				sphere.collide(particle);
 			}
 			//=========================
 
 			//=== TRIANGLE COLLISION ===
 			glm::vec3 intersectionVec;
-			bool isIntersecting = triangle.intersecSegment(_pa.getPreviousPosition(), _pa.getCurrentPosition(), intersectionVec);
+			bool isIntersecting = triangle.intersecSegment(particle.getPreviousPosition(), particle.getCurrentPosition(), intersectionVec);
 			if (isIntersecting && triangle.isInside(intersectionVec))
 			{
-				auto [newPos, newVelocity] = triangle.getCollisionProducts(_pa.getCurrentPosition(), _pa.getVelocity(), _pa.getBouncing());
-			
-				_pa.setPosition(newPos);
-				_pa.setVelocity(newVelocity);
+				triangle.collide(particle);
 			}
 			//==========================
 
 			//=== PARTICLE RENDER ===
-			_pa.render(particleModel);
+			particle.render(particleModel);
 			//========================
 		}
-		
-		//UPDATE DELTA TIME	
-		time = time + dt;
-		// ==========================
 
 		//=== OBJECTS RENDERING
 		sphere.render();
@@ -186,6 +172,10 @@ void main(){
 		
 		EndDrawing();
 		//----------------------------------------------------------------------------------
+
+		//UPDATE DELTA TIME	
+		time = time + dt;
+		// ==========================
 	}
 
 	// De-Initialization

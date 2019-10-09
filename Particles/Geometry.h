@@ -30,12 +30,15 @@ struct Plane : public Geometry {
 	Plane(const glm::vec3& point0, const glm::vec3& point1, const glm::vec3& point2);
 
 	bool collides(const glm::vec3& oldPos, const glm::vec3& dtPos);
+	bool collides(Particle& particle);
 	void setPosition(const glm::vec3& newPos);
 	bool isInside(const glm::vec3& point);
 	float distPoint2Plane(const glm::vec3& point);
 	glm::vec3 closestPointInPlane(const glm::vec3& point);
 	virtual bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
 	std::pair<glm::vec3, glm::vec3> getCollisionProducts(const glm::vec3& pos, const glm::vec3& velocity, const float& bouncing);
+	void collide(Particle& particle);
+	glm::vec3 getMirrorPoint(const glm::vec3& point);
 };	
 
 struct Triangle : public Plane
@@ -65,6 +68,7 @@ struct Sphere : public Geometry {
 	bool isInside(const glm::vec3& point);
 	glm::vec3 getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& oldPos);
 	std::pair<glm::vec3, glm::vec3> getCollisionProducts(Particle& particle, const glm::vec3& intersectionPoint);
+	void collide(Particle& particle);
 	//bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
 };
 

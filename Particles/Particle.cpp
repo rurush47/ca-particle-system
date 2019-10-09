@@ -13,6 +13,10 @@ m_previousPosition(0, 0, 0), m_velocity(0, 0, 0), m_force(0, 0, 0), m_bouncing(1
 	m_currentPosition.x = x;
 	m_currentPosition.y = y;
 	m_currentPosition.z = z;
+
+	m_previousPosition.x = x;
+	m_previousPosition.y = y;
+	m_previousPosition.z = z;
 }
 
 /*
@@ -161,10 +165,11 @@ void Particle::updateParticle(const float& dt, UpdateMethod method)
 			break;
 		case UpdateMethod::Verlet:
 		{
-			m_previousPosition = m_currentPosition;
-			const auto oldVelocity = m_velocity;
-			m_velocity += m_force * dt;
-			m_currentPosition += (oldVelocity + m_velocity) * 0.5f * dt;
+			const auto pos = m_currentPosition;
+			m_currentPosition = 2.0f*m_currentPosition - m_previousPosition + (dt*dt)*(m_force);
+			m_previousPosition = pos;
+				
+			m_velocity = (m_currentPosition - m_previousPosition) / dt;
 		}
 			break;
 		}
@@ -175,4 +180,9 @@ void Particle::updateParticle(const float& dt, UpdateMethod method)
 void Particle::render(const Model& model)
 {
 	DrawModel(model, Geometry::glmToRaylibVec3(m_currentPosition), 1, GREEN);
+}
+
+void Particle::initVerlet(const float& dt)
+{
+	m_previousPosition = m_currentPosition - m_velocity * dt;
 }

@@ -36,6 +36,13 @@ bool Plane::collides(const glm::vec3& oldPos, const glm::vec3& dtPos)
 	return (glm::dot(normal, dtPos) + dconst) * (glm::dot(normal, oldPos) + dconst) <= 0;
 };
 
+bool Plane::collides(Particle& particle)
+{
+	auto previousPos = particle.getPreviousPosition();
+	auto currentPos = particle.getCurrentPosition();
+	return (glm::dot(normal, currentPos) + dconst) * (glm::dot(normal, previousPos) + dconst) <= 0;
+};
+
 void Plane::setPosition(const glm::vec3& newPos){
 	dconst = -glm::dot(newPos, normal);
 };
@@ -80,6 +87,34 @@ std::pair<glm::vec3, glm::vec3> Plane::getCollisionProducts(const glm::vec3& pos
 	auto newVelocity = currentVelocity - (1 + bouncing) * dotVel * normal;
 
 	return std::pair<glm::vec3, glm::vec3>{newPos, newVelocity};
+}
+
+void Plane::collide(Particle& particle)
+{
+	auto bouncing = particle.getBouncing();
+	auto previousPos = particle.getPreviousPosition();
+	auto currentPos = particle.getCurrentPosition();
+	auto currentVelocity = particle.getVelocity();
+
+	//PLANE COLLISION
+	auto dotOne = (glm::dot(normal, currentPos) + dconst);
+	auto newPos = currentPos - (1 + bouncing) * dotOne * normal;
+	 
+	//NEW VELOCITY
+	auto dotVel = glm::dot(normal, currentVelocity);
+	auto newVelocity = currentVelocity - (1 + bouncing) * dotVel * normal;
+
+	//VERLET CORRECTION
+	//particle.setPreviousPosition(getMirrorPoint(previousPos));
+
+	//SET NEW PARTICLE PARAMETERS
+	particle.setPosition(newPos);
+	particle.setVelocity(newVelocity);
+}
+
+glm::vec3 Plane::getMirrorPoint(const glm::vec3& point)
+{
+	return point - 2*(glm::dot(normal, point) + dconst) * normal;
 }
 
 Triangle::Triangle(const glm::vec3& point0, const glm::vec3& point1, const glm::vec3& point2)
@@ -180,7 +215,7 @@ bool Triangle::isInside(const glm::vec3& onPlanePoint)
 		getBarycentricProduct(vertex1, vertex2, onPlanePoint) -
 		getBarycentricProduct(vertex1, vertex2, vertex3);
 
-	bool inside = glm::abs(barycentricValue) < FLOAT_ZERO_COMPARISON_ERROR;
+	bool inside = abs(barycentricValue) < FLOAT_ZERO_COMPARISON_ERROR;
 	return inside;
 }
 
@@ -239,13 +274,14 @@ glm::vec3 Sphere::getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& 
 {
 	auto vectorDelta = dtPos - oldPos;
 	auto a = glm::dot(vectorDelta, vectorDelta);
-	auto b = glm::dot(vectorDelta * 2.0f, (oldPos - center));
+	auto b = 2*glm::dot(vectorDelta, (oldPos - center));
 	auto c = glm::dot(center, center) + glm::dot(oldPos, oldPos)
-		- glm::dot(2.0f * oldPos, center) - rad * rad;
+		- 2*glm::dot(oldPos, center) - rad * rad;
 
 	//u is an alpha from the course slides
-	auto u1 = (-b + glm::sqrt(b * b - 4 * a * c)) / 2 * a;
-	auto u2 = (-b - glm::sqrt(b * b - 4 * a * c)) / 2 * a;
+	auto exp = b * b - 4 * a * c;
+	auto u1 = (-b + glm::sqrt(exp)) / 2 * a;
+	auto u2 = (-b - glm::sqrt(exp)) / 2 * a;
 	float u;
 
 	if (u1 >= 0 && u1 <= 1 &&
@@ -271,9 +307,15 @@ glm::vec3 Sphere::getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& 
 
 std::pair<glm::vec3, glm::vec3> Sphere::getCollisionProducts(Particle& particle, const glm::vec3& intersectionPoint)
 {
-	//TODO remove plane ?
 	Plane tangentPlane(intersectionPoint, glm::normalize(intersectionPoint - center));
 	return tangentPlane.getCollisionProducts(particle.getCurrentPosition(), particle.getVelocity(), particle.getBouncing());
+}
+
+void Sphere::collide(Particle& particle)
+{
+	const auto intersectionPoint = getIntersectionPoint(particle.getPreviousPosition(), particle.getCurrentPosition());
+	Plane tangentPlane(intersectionPoint, glm::normalize(intersectionPoint - center));
+	tangentPlane.collide(particle);
 }
 
 //****************************************************
