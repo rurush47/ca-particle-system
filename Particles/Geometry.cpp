@@ -4,6 +4,8 @@
 #include "rlgl.h"
 #include "Particle.h"
 #include <functional>
+#include <glm/detail/type_mat.hpp>
+#include <glm/detail/type_mat.hpp>
 
 //****************************************************
 // Plane
@@ -89,7 +91,7 @@ std::pair<glm::vec3, glm::vec3> Plane::getCollisionProducts(const glm::vec3& pos
 	return std::pair<glm::vec3, glm::vec3>{newPos, newVelocity};
 }
 
-void Plane::collide(Particle& particle)
+void Plane::collide(Particle& particle, glm::vec3& previousPosCorrection)
 {
 	auto bouncing = particle.getBouncing();
 	auto previousPos = particle.getPreviousPosition();
@@ -105,7 +107,7 @@ void Plane::collide(Particle& particle)
 	auto newVelocity = currentVelocity - (1 + bouncing) * dotVel * normal;
 
 	//VERLET CORRECTION
-	//particle.setPreviousPosition(getMirrorPoint(previousPos));
+	previousPosCorrection = getMirrorPoint(previousPos);
 
 	//SET NEW PARTICLE PARAMETERS
 	particle.setPosition(newPos);
@@ -311,11 +313,11 @@ std::pair<glm::vec3, glm::vec3> Sphere::getCollisionProducts(Particle& particle,
 	return tangentPlane.getCollisionProducts(particle.getCurrentPosition(), particle.getVelocity(), particle.getBouncing());
 }
 
-void Sphere::collide(Particle& particle)
+void Sphere::collide(Particle& particle, glm::vec3& previousPosCorrection)
 {
 	const auto intersectionPoint = getIntersectionPoint(particle.getPreviousPosition(), particle.getCurrentPosition());
 	Plane tangentPlane(intersectionPoint, glm::normalize(intersectionPoint - center));
-	tangentPlane.collide(particle);
+	tangentPlane.collide(particle, previousPosCorrection);
 }
 
 //****************************************************

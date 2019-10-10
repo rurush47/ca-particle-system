@@ -4,6 +4,7 @@
 #include "Particle.h"
 #include "Geometry.h"
 #include "raylib.h"
+#include "camera.h"
 #include "ParticleManager.h"
 
 void main(){
@@ -26,21 +27,22 @@ void main(){
 
 	Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
 
-	SetCameraMode(camera, CAMERA_FREE); // Set a free camera mode
+	SetCameraMode(camera, CAMERA_THIRD_PERSON); // Set a free camera mode
 
-	int targetFPS = 60;
+	int targetFPS = 120;
 	SetTargetFPS(targetFPS);                   // Set our game to run at 60 frames-per-second
 
 
 	//=== CONSTS ===
-	float dt = 0.01;  //simulation time
+	Particle::UpdateMethod updateMethod = Particle::UpdateMethod::EulerSemi;
+	float dt = 0.005;  //simulation time
 	float tini = 0.0f; 
-	//=========================
+	//================
 
 	//=== INIT PARTICLES MANAGER ===
 	std::shared_ptr<std::vector<Particle>> particles(new std::vector<Particle>);
-	ParticleManager ps(0.02f, particles);
-	auto particleModel = LoadModelFromMesh(GenMeshSphere(0.05f, 6, 6));
+	ParticleManager ps(0.06f, particles);
+	auto particleModel = LoadModelFromMesh(GenMeshSphere(0.07f, 6, 6));
 	//==============================
 	
 	//=== DEFINE PLANE BOX ==========
@@ -66,10 +68,7 @@ void main(){
 	planes.push_back(plane4);
 	planes.push_back(plane5);
 	//===============================
-	
-	auto mPos = plane4.getMirrorPoint(glm::vec3(0, 5, 0));
-	std::cout << std::to_string(mPos.x) + " " + std::to_string(mPos.y) + " " + std::to_string(mPos.z) << std::endl;
-	
+
 	//=== DEFINE SPHERE ==============
 	glm::vec3 sphereCenter(-6, -3, 0);
 	Sphere sphere(sphereCenter, 6);
@@ -84,9 +83,9 @@ void main(){
 	
 	// simulation loop
 	int count = 0;
-	bool collides;
 	float time = tini;
-
+	bool collides;
+	glm::vec3 previousPosCorrection;
 	// Main game loop
 	while (!WindowShouldClose())        // Detect window close button or ESC key
 	{
@@ -107,39 +106,55 @@ void main(){
 		BeginMode3D(camera);
 
 		//===UPDATE PARTICLES===
-		ps.update(dt);
+		ps.update(dt, updateMethod);
 		//======================
-		
+
+
 		for (Particle& particle : *particles.get())
 		{
-			//========================
+			collides = false;
 
 			//=== PLANES COLLISION ===
 			for (Plane& plane : planes)
 			{
-				if (plane.collides(particle))
+				bool planeCollision = plane.collides(particle);
+				collides = collides || planeCollision;
+				if (planeCollision)
 				{
-					plane.collide(particle);
+					plane.collide(particle, previousPosCorrection);
+					//particle.setPreviousPosition(previousPosCorrection);
 				}
 			}
-			//=========================
-
+			//========================
+			
 			//=== SPHERE COLLISION ===
-			if (sphere.isInside(particle.getCurrentPosition()))
+			bool sphereCollision = sphere.isInside(particle.getCurrentPosition());
+			collides = collides || sphereCollision;
+			if (sphereCollision)
 			{
-				sphere.collide(particle);
+				sphere.collide(particle, previousPosCorrection);
+				//particle.setPreviousPosition(previousPosCorrection);
 			}
 			//=========================
 
 			//=== TRIANGLE COLLISION ===
 			glm::vec3 intersectionVec;
-			bool isIntersecting = triangle.intersecSegment(particle.getPreviousPosition(), particle.getCurrentPosition(), intersectionVec);
-			if (isIntersecting && triangle.isInside(intersectionVec))
+			bool triangleCollision = triangle.intersecSegment(particle.getPreviousPosition(), particle.getCurrentPosition(), intersectionVec) &&
+				triangle.isInside(intersectionVec);
+			collides = collides || triangleCollision;
+			if (triangleCollision)
 			{
-				triangle.collide(particle);
+				triangle.collide(particle, previousPosCorrection);
+				//particle.setPreviousPosition(previousPosCorrection);
 			}
 			//==========================
 
+			//UPDATE PREVIOUS POS FOR VERLET (FROM LAST COLLISION)
+			if(collides && updateMethod == Particle::UpdateMethod::Verlet)
+			{
+				particle.setPreviousPosition(previousPosCorrection);
+			}
+			//====================================================
 			//=== PARTICLE RENDER ===
 			particle.render(particleModel);
 			//========================

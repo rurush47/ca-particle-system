@@ -7,7 +7,7 @@ class ParticleManager
 public:
 	ParticleManager(const float& particleSpawnOffset, const std::shared_ptr<std::vector<Particle>>& particles);
 	~ParticleManager();
-	void update(const float& dt);
+	void update(const float& dt, const Particle::UpdateMethod& updateMethod);
 	void spawnParticle(const float& dt);
 
 	float m_particleSpawnOffset;

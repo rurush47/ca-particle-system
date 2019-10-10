@@ -15,7 +15,7 @@ ParticleManager::~ParticleManager()
 {
 }
 
-void ParticleManager::update(const float& dt)
+void ParticleManager::update(const float& dt, const Particle::UpdateMethod& updateMethod)
 {
 
 	//=== SPAWN PARTICLES CODE ===
@@ -31,7 +31,7 @@ void ParticleManager::update(const float& dt)
 	for (auto it = m_particles->begin(); it != m_particles->end(); ++it)
 	{
 		it->setLifetime(it->getLifetime() - dt);
-		it->updateParticle(dt, Particle::UpdateMethod::EulerSemi);
+		it->updateParticle(dt, updateMethod);
 	}
 
 	m_particles->erase(std::remove_if(m_particles->begin(), m_particles->end(),
