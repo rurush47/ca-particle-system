@@ -25,6 +25,7 @@ public:
 	void setBouncing(float bouncing);
 	void setLifetime(float lifetime);
 	void setFixed(bool fixed);
+	float setMass(float mass);
 
 	//getters
 	glm::vec3 getCurrentPosition();
@@ -35,6 +36,7 @@ public:
 	float getBouncing();
 	float getLifetime();
 	bool isFixed();
+	float getMass();
 
 	//other
 	void addForce(glm::vec3 force);
@@ -48,6 +50,7 @@ private:
 	glm::vec3 m_previousPosition;
 	glm::vec3 m_force;
 	glm::vec3 m_velocity;
+	float m_mass;
 
 	float m_bouncing;
 	float m_lifetime;

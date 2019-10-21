@@ -8,7 +8,7 @@ Particle::Particle()
 }
 
 Particle::Particle(const float& x, const float& y, const float& z) :
-m_previousPosition(0, 0, 0), m_velocity(0, 0, 0), m_force(0, 0, 0), m_bouncing(1), m_lifetime(50), m_fixed(false)
+m_previousPosition(0, 0, 0), m_velocity(0, 0, 0), m_force(0, 0, 0), m_bouncing(1), m_lifetime(50), m_mass(1), m_fixed(false)
 {
 	m_currentPosition.x = x;
 	m_currentPosition.y = y;
@@ -100,6 +100,11 @@ void Particle::setFixed(bool fixed)
 	m_fixed = fixed;
 }
 
+float Particle::setMass(float mass)
+{
+	m_mass = mass;
+}
+
 //getters
 glm::vec3 Particle::getCurrentPosition()
 {
@@ -141,6 +146,11 @@ float Particle::getLifetime()
 bool Particle::isFixed()
 {
 	return m_fixed;
+}
+
+float Particle::getMass()
+{
+	return m_mass;
 }
 
 void Particle::updateParticle(const float& dt, UpdateMethod method)
