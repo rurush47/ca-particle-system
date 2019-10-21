@@ -44,7 +44,7 @@ void ParticleManager::spawnParticle(const float& dt)
 
 	newParticle.setLifetime(15);
 	newParticle.setBouncing(0.6);
-	newParticle.addForce(0, -9.8f, 0);
+	newParticle.addAcceleration(0, -9.8f, 0);
 	newParticle.setVelocity(
 		Geometry::getRandomFloat(-5, 5),
 		Geometry::getRandomFloat(-5, 5),

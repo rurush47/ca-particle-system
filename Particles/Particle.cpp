@@ -8,7 +8,7 @@ Particle::Particle()
 }
 
 Particle::Particle(const float& x, const float& y, const float& z) :
-m_previousPosition(0, 0, 0), m_velocity(0, 0, 0), m_force(0, 0, 0), m_bouncing(1), m_lifetime(50), m_mass(1), m_fixed(false)
+m_previousPosition(0, 0, 0), m_velocity(0, 0, 0), m_acceleration(0, 0, 0), m_bouncing(1), m_lifetime(50), m_mass(1), m_fixed(false)
 {
 	m_currentPosition.x = x;
 	m_currentPosition.y = y;
@@ -21,7 +21,7 @@ m_previousPosition(0, 0, 0), m_velocity(0, 0, 0), m_force(0, 0, 0), m_bouncing(1
 
 /*
 Particle::Particle(glm::vec3 pos, glm::vec3 vel, float bouncing, bool fixed, int lifetime, glm::vec3 force) :
-m_currentPosition(pos), m_previousPosition(pos), m_force(force), m_velocity(vel), m_bouncing(bouncing), m_lifetime(lifetime), m_fixed(fixed)
+m_currentPosition(pos), m_previousPosition(pos), m_acceleration(force), m_velocity(vel), m_bouncing(bouncing), m_lifetime(lifetime), m_fixed(fixed)
 {
 }
 */
@@ -52,26 +52,26 @@ void Particle::setPreviousPosition(glm::vec3 pos)
 	m_previousPosition = pos;
 }
 
-void Particle::setForce(const float& x, const float& y, const float& z)
+void Particle::setAcceleration(const float& x, const float& y, const float& z)
 {
-	glm::vec3 force(x, y, z);
-	m_force = force;
+	glm::vec3 acceleration(x, y, z);
+	m_acceleration = acceleration;
 }
 
-void Particle::setForce(glm::vec3 force)
+void Particle::setAcceleration(glm::vec3 acceleration)
 {
-	m_force = force;
+	m_acceleration = acceleration;
 }
 
-void Particle::addForce(const float& x, const float& y, const float& z)
+void Particle::addAcceleration(const float& x, const float& y, const float& z)
 {
-	glm::vec3 force(x,y,z);
-	m_force += force;
+	glm::vec3 acceleration(x,y,z);
+	m_acceleration += acceleration;
 }
 
-void Particle::addForce(glm::vec3 force)
+void Particle::addAcceleration(glm::vec3 acceleration)
 {
-	m_force += force;
+	m_acceleration += acceleration;
 }
 
 void Particle::setVelocity(const float& x, const float& y, const float& z)
@@ -100,7 +100,7 @@ void Particle::setFixed(bool fixed)
 	m_fixed = fixed;
 }
 
-float Particle::setMass(float mass)
+void Particle::setMass(float mass)
 {
 	m_mass = mass;
 }
@@ -123,9 +123,9 @@ glm::vec3 Particle::getPreviousPosition()
 	return m_previousPosition;
 }
 
-glm::vec3 Particle::getForce()
+glm::vec3 Particle::getAcceleration()
 {
-	return m_force;
+	return m_acceleration;
 }
 
 glm::vec3 Particle::getVelocity()
@@ -163,20 +163,20 @@ void Particle::updateParticle(const float& dt, UpdateMethod method)
 		{
 			m_previousPosition = m_currentPosition;
 			m_currentPosition += m_velocity*dt;
-			m_velocity += m_force*dt;
+			m_velocity += m_acceleration*m_mass *dt;
 		}
 			break;
 		case UpdateMethod::EulerSemi:
 		{
 			m_previousPosition = m_currentPosition;
-			m_velocity += m_force*dt;
+			m_velocity += m_acceleration*m_mass *dt;
 			m_currentPosition += m_velocity*dt;
 		}
 			break;
 		case UpdateMethod::Verlet:
 		{
 			const auto pos = m_currentPosition;
-			m_currentPosition = 2.0f*m_currentPosition - m_previousPosition + (dt*dt)*(m_force);
+			m_currentPosition = 2.0f*m_currentPosition - m_previousPosition + (dt*dt)*(m_acceleration*m_mass);
 			m_previousPosition = pos;
 				
 			m_velocity = (m_currentPosition - m_previousPosition) / dt;
