@@ -1,6 +1,8 @@
 #include "Particle.h"
 #include <raylib.h>
 #include "Geometry.h"
+#include <iostream>
+#include <string>
 
 
 Particle::Particle()
@@ -8,7 +10,7 @@ Particle::Particle()
 }
 
 Particle::Particle(const float& x, const float& y, const float& z) :
-m_previousPosition(0, 0, 0), m_velocity(0, 0, 0), m_force(0, 0, 0), m_bouncing(1), m_lifetime(50), m_mass(1), m_fixed(false)
+m_previousPosition(0, 0, 0), m_velocity(0, 0, 0), m_force(0, 0, 0), m_bouncing(1), m_lifetime(50), m_mass(1), m_fixed(false), m_friction(0)
 {
 	m_currentPosition.x = x;
 	m_currentPosition.y = y;
@@ -38,6 +40,11 @@ void Particle::setPosition(const float& x, const float& y, const float& z)
 }
 void Particle::setPosition(glm::vec3 pos)
 {
+	if(m_fixed)
+	{
+		return;
+	}
+	
 	m_currentPosition = pos;
 }
 
@@ -76,6 +83,11 @@ void Particle::addForce(glm::vec3 force)
 
 void Particle::setVelocity(const float& x, const float& y, const float& z)
 {
+	if(m_fixed)
+	{
+		return;
+	}
+	
 	glm::vec3 vel(x,y,z);
 	m_velocity = vel;
 }
@@ -98,10 +110,18 @@ void Particle::setLifetime(float lifetime)
 void Particle::setFixed(bool fixed)
 {
 	m_fixed = fixed;
+	//== SET FORCES TO ZERO ===
+	setPreviousPosition(m_currentPosition);
+	m_velocity = glm::vec3(0, 0, 0);
+	//m_force = glm::vec3(0, 0, 0);
 }
 
-float Particle::setMass(float mass)
+void Particle::setMass(float mass)
 {
+	if(mass < 0)
+	{
+		mass = 0;
+	}
 	m_mass = mass;
 }
 
@@ -153,6 +173,16 @@ float Particle::getMass()
 	return m_mass;
 }
 
+glm::vec3 Particle::getAllForces()
+{
+	return m_force + m_impulse;
+}
+
+float Particle::getFriction()
+{
+	return m_friction;
+}
+
 void Particle::updateParticle(const float& dt, UpdateMethod method)
 {
 	if (!m_fixed & m_lifetime > 0)
@@ -163,20 +193,23 @@ void Particle::updateParticle(const float& dt, UpdateMethod method)
 		{
 			m_previousPosition = m_currentPosition;
 			m_currentPosition += m_velocity*dt;
-			m_velocity += m_force*dt;
+			const auto acc = getAllForces() * invMass();
+			m_velocity += acc*dt;
 		}
 			break;
 		case UpdateMethod::EulerSemi:
 		{
 			m_previousPosition = m_currentPosition;
-			m_velocity += m_force*dt;
+			const auto acc = getAllForces()* invMass();
+			m_velocity += acc*dt;
 			m_currentPosition += m_velocity*dt;
 		}
 			break;
 		case UpdateMethod::Verlet:
 		{
 			const auto pos = m_currentPosition;
-			m_currentPosition = 2.0f*m_currentPosition - m_previousPosition + (dt*dt)*(m_force);
+			const auto acc = getAllForces() * invMass();
+			m_currentPosition = 2.0f*m_currentPosition - m_previousPosition + (dt*dt)*(acc);
 			m_previousPosition = pos;
 				
 			m_velocity = (m_currentPosition - m_previousPosition) / dt;
@@ -184,6 +217,9 @@ void Particle::updateParticle(const float& dt, UpdateMethod method)
 			break;
 		}
 	}
+
+	m_impulse = glm::vec3(0, 0, 0);
+	
 	return;
 }
 
@@ -195,4 +231,39 @@ void Particle::render(const Model& model)
 void Particle::initVerlet(const float& dt)
 {
 	m_previousPosition = m_currentPosition - m_velocity * dt;
+}
+
+glm::vec3 m_impulse;
+
+void Particle::addImpulse(const glm::vec3& impulse)
+{
+	// if(m_fixed)
+	// {
+	// 	return;
+	// }
+
+	m_impulse += impulse;
+}
+
+float Particle::invMass()
+{
+	if(m_mass == 0.0f)
+	{
+		return 0.0f;
+	}
+	return 1.0f / m_mass;
+}
+
+void Particle::setFriction(float friction)
+{
+	if(friction < 0)
+	{
+		friction = 0;
+	}
+	m_friction = friction;
+}
+
+void Particle::debugPosition()
+{
+	std::cout << std::to_string(m_currentPosition.x) + " " + std::to_string(m_currentPosition.y) + " " + std::to_string(m_currentPosition.z) << std::endl;
 }

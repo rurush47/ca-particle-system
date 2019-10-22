@@ -25,7 +25,7 @@ public:
 	void setBouncing(float bouncing);
 	void setLifetime(float lifetime);
 	void setFixed(bool fixed);
-	float setMass(float mass);
+	void setMass(float mass);
 
 	//getters
 	glm::vec3 getCurrentPosition();
@@ -37,6 +37,8 @@ public:
 	float getLifetime();
 	bool isFixed();
 	float getMass();
+	glm::vec3 getAllForces();
+	float getFriction();
 
 	//other
 	void addForce(glm::vec3 force);
@@ -44,18 +46,23 @@ public:
 	void updateParticle(const float& dt, UpdateMethod method = UpdateMethod::EulerOrig);
 	void render(const Model& model);
 	void initVerlet(const float& dt);
+	void addImpulse(const glm::vec3& impulse);
+	float invMass();
+	void setFriction(float friction);
+	void debugPosition();
 
 private:
 	glm::vec3 m_currentPosition;
 	glm::vec3 m_previousPosition;
 	glm::vec3 m_force;
 	glm::vec3 m_velocity;
-	float m_mass;
 
+	float m_mass;
 	float m_bouncing;
 	float m_lifetime;
 	bool  m_fixed;
-
+	float m_friction;
+	glm::vec3 m_impulse;
 };
 
 #endif

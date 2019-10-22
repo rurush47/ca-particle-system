@@ -18,6 +18,7 @@ struct Geometry{
 	static Vector3 glmToRaylibVec3(const glm::vec3& vec3);
 	static float getRandomFloat(const float& minVal, const float& maxVal);
 	Mesh genCustomTriangleMesh(const std::vector<Vector3>& customVertices, const int& sides, const float& radius);
+	static void Geometry::debugVector3(const glm::vec3& vec);
 };
 
 struct Plane : public Geometry {

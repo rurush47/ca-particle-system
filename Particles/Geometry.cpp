@@ -6,6 +6,8 @@
 #include <functional>
 #include <glm/detail/type_mat.hpp>
 #include <glm/detail/type_mat.hpp>
+#include <iostream>
+#include <string>
 
 //****************************************************
 // Plane
@@ -20,6 +22,12 @@ float Geometry::getRandomFloat(const float& minVal, const float& maxVal)
 {
 	return minVal + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxVal - minVal)));
 }
+
+void Geometry::debugVector3(const glm::vec3& vec)
+{
+	std::cout << std::to_string(vec.x) + " " + std::to_string(vec.y) + " " + std::to_string(vec.z) << std::endl;
+}
+
 
 Plane::Plane(const glm::vec3& point, const glm::vec3& normalVect){
 	normal = glm::normalize(normalVect);
@@ -106,6 +114,12 @@ void Plane::collide(Particle& particle, glm::vec3& previousPosCorrection)
 	auto dotVel = glm::dot(normal, currentVelocity);
 	auto newVelocity = currentVelocity - (1 + bouncing) * dotVel * normal;
 
+	//FRICTION
+	auto normalVelocity = glm::dot(normal, currentVelocity) * normal;
+	auto tangentVelocity = currentVelocity - normalVelocity;
+
+	newVelocity -= particle.getFriction() * tangentVelocity;
+	
 	//VERLET CORRECTION
 	previousPosCorrection = getMirrorPoint(previousPos);
 

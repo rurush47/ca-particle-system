@@ -6,6 +6,14 @@
 #include "raylib.h"
 #include "camera.h"
 #include "ParticleManager.h"
+#include "Spring.h"
+#include "Cloth.h"
+
+enum class SimulationMode
+{
+	Cloth,
+	Rope
+};
 
 void main(){
 
@@ -22,12 +30,12 @@ void main(){
 	camera.position = *new Vector3{ 10.0f, 10.0f, 10.0f }; // Camera position
 	camera.target = *new Vector3{ 0.0f, 0.0f, 0.0f };      // Camera looking at point
 	camera.up = *new Vector3{ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-	camera.fovy = 45.0f;                                // Camera field-of-view Y
+	camera.fovy = 60.0f;                                // Camera field-of-view Y
 	camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 
 	Vector3 cubePosition = { 0.0f, 0.0f, 0.0f };
 
-	SetCameraMode(camera, CAMERA_THIRD_PERSON); // Set a free camera mode
+	SetCameraMode(camera, CAMERA_FIRST_PERSON); // Set a free camera mode
 
 	int targetFPS = 120;
 	SetTargetFPS(targetFPS);                   // Set our game to run at 60 frames-per-second
@@ -40,10 +48,19 @@ void main(){
 	//================
 
 	//=== INIT PARTICLES MANAGER ===
-	std::shared_ptr<std::vector<Particle>> particles(new std::vector<Particle>);
-	ParticleManager ps(0.06f, particles);
+	std::vector<Particle> particles;
+	ParticleManager ps(0.06f, particles, false);
 	auto particleModel = LoadModelFromMesh(GenMeshSphere(0.07f, 6, 6));
+
+
+
+	//=== SPRING ===
+	std::vector<Spring> springs;
 	//==============================
+
+	//=== CLOTH ===
+	Cloth cloth;
+	//=============
 	
 	//=== DEFINE PLANE BOX ==========
 	glm::vec3 punt1(0, 0, 0);
@@ -70,8 +87,8 @@ void main(){
 	//===============================
 
 	//=== DEFINE SPHERE ==============
-	glm::vec3 sphereCenter(-6, -3, 0);
-	Sphere sphere(sphereCenter, 6);
+	glm::vec3 sphereCenter(-3.0f, 3.5f, 0.6f);
+	Sphere sphere(sphereCenter, 3);
 	//================================
 
 	//=== DEFINE TRIANGLE=============
@@ -87,6 +104,11 @@ void main(){
 	bool collides;
 	glm::vec3 previousPosCorrection;
 	// Main game loop
+
+	bool startLoop = false;
+
+	SimulationMode simulationMode = SimulationMode::Cloth;
+
 	while (!WindowShouldClose())        // Detect window close button or ESC key
 	{
 		// Update
@@ -94,7 +116,58 @@ void main(){
 		UpdateCamera(&camera);          // Update camera
 
 		if (IsKeyDown('Z')) camera.target = *new Vector3{ 0.0f, 0.0f, 0.0f };
-	
+
+		if (IsKeyDown('C'))
+		{
+			simulationMode = SimulationMode::Cloth;
+
+			cloth.Initialize(8, 0.5, glm::vec3(0, 10, 0));
+		}
+
+		if (IsKeyDown('R'))
+		{
+			simulationMode = SimulationMode::Rope;
+
+			ps.clear();
+			ps.spawnParticle(dt);
+			ps.spawnParticle(dt);
+			ps.spawnParticle(dt);
+			ps.spawnParticle(dt);
+			ps.spawnParticle(dt);
+			Particle* p1 = &particles[0];
+			Particle* p2 = &particles[1];
+			Particle* p3 = &particles[2];
+			Particle* p4 = &particles[3];
+			Particle* p5 = &particles[4];
+
+			p1->setFixed(true);
+			p1->setPosition(0, 10, 0);
+
+			p2->setPosition(1, 9, 0);
+
+			p3->setPosition(2, 8, 0);
+
+			p4->setPosition(3, 7, 0);
+
+			p5->setPosition(4, 6, 0);
+
+			Spring s(20, 0.8f, 1.5f);
+			s.setParticles(p1, p2);
+			springs.push_back(s);
+
+			Spring s2(20, 0.8f, 1.5f);
+			s2.setParticles(p2, p3);
+			springs.push_back(s2);
+
+			Spring s3(20, 0.8f, 1.5f);
+			s3.setParticles(p3, p4);
+			springs.push_back(s3);
+
+			Spring s4(20, 0.8f, 1.5f);
+			s4.setParticles(p4, p5);
+			springs.push_back(s4);
+		}
+		
 		//----------------------------------------------------------------------------------
 
 		// Draw
@@ -105,15 +178,50 @@ void main(){
 		
 		BeginMode3D(camera);
 
+
+		if(simulationMode == SimulationMode::Rope)
+		{
+			//=== SPRINGS UPDATE ===
+			for (Spring& spring : springs)
+			{
+				spring.applyForce(dt);
+			}
+			//======================
+
+			for (Spring& spring : springs)
+			{
+				spring.solveConstraints();
+			}
+			// === CLOTH UPDATE ===
+		}
+		
+		if (simulationMode == SimulationMode::Cloth)
+		{
+			cloth.ApplySpringForces(dt);
+
+			cloth.update(dt, updateMethod);
+		}
+		//=====================
+		
 		//===UPDATE PARTICLES===
 		ps.update(dt, updateMethod);
 		//======================
 
-
-		for (Particle& particle : *particles.get())
+		std::vector<Particle>* partilcesVector;
+		if(simulationMode == SimulationMode::Rope)
+		{
+			partilcesVector = &particles;
+		}
+		else
+		{
+			partilcesVector = &cloth.getVerts();
+		}
+		
+		//
+		for (Particle& particle : *partilcesVector)
 		{
 			collides = false;
-
+		
 			//=== PLANES COLLISION ===
 			for (Plane& plane : planes)
 			{
@@ -136,7 +244,7 @@ void main(){
 				//particle.setPreviousPosition(previousPosCorrection);
 			}
 			//=========================
-
+		
 			//=== TRIANGLE COLLISION ===
 			glm::vec3 intersectionVec;
 			bool triangleCollision = triangle.intersecSegment(particle.getPreviousPosition(), particle.getCurrentPosition(), intersectionVec) &&
@@ -148,7 +256,7 @@ void main(){
 				//particle.setPreviousPosition(previousPosCorrection);
 			}
 			//==========================
-
+		
 			//UPDATE PREVIOUS POS FOR VERLET (FROM LAST COLLISION)
 			if(collides && updateMethod == Particle::UpdateMethod::Verlet)
 			{
@@ -159,8 +267,20 @@ void main(){
 			particle.render(particleModel);
 			//========================
 		}
-
 		//=== OBJECTS RENDERING
+
+		if(simulationMode == SimulationMode::Rope)
+		{
+			for (Spring& spring : springs)
+			{
+				spring.render();
+			}
+		}
+		else
+		{
+			cloth.render(particleModel);
+		}
+		
 		sphere.render();
 		triangle.render();
 		//================

@@ -5,14 +5,16 @@
 class ParticleManager
 {
 public:
-	ParticleManager(const float& particleSpawnOffset, const std::shared_ptr<std::vector<Particle>>& particles);
+	ParticleManager(const float& particleSpawnOffset, std::vector<Particle>& particles, bool spawning = true);
 	~ParticleManager();
 	void update(const float& dt, const Particle::UpdateMethod& updateMethod);
-	void spawnParticle(const float& dt);
+	Particle* spawnParticle(const float& dt);
+	void clear();
 
+	bool m_spawning;
 	float m_particleSpawnOffset;
 	float m_currentOffset = 0;
-	const std::shared_ptr<std::vector<Particle>>& m_particles;
+	std::vector<Particle>& m_particles;
 	Model m_particleModel;
 };
 
