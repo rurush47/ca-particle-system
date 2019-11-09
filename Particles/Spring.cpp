@@ -47,8 +47,8 @@ void Spring::solveConstraints()
 	float distance = glm::length(delta);
 	float correction = (distance - m_restingLength) / distance;
 
-	//m_p1->setPosition(m_p1->getCurrentPosition() + delta * 0.5f * correction);
-	//m_p2->setPosition(m_p2->getCurrentPosition() - delta * 0.5f * correction);
+	m_p1->setPosition(m_p1->getCurrentPosition() + delta * 0.5f * correction);
+	m_p2->setPosition(m_p2->getCurrentPosition() - delta * 0.5f * correction);
 }
 
 void Spring::render()

@@ -1,8 +1,8 @@
 #include "Cloth.h"
 
 void Cloth::Initialize(int gridSize, float distance, const glm::vec3& position) {
-	float k = 20;
-	float b = 0.8f;
+	float k = 150;
+	float b = 50;
 	clothSize = gridSize;
 
 	verts.clear();
@@ -27,7 +27,7 @@ void Cloth::Initialize(int gridSize, float distance, const glm::vec3& position) 
 
 			verts[i] = *new Particle(x_pos, position.y, z_pos);
 			//verts[i].setPosition(glm::vec3(x_pos, position.y, z_pos));
-			verts[i].setMass(1.0f);
+			verts[i].setMass(2.0f);
 			verts[i].setBouncing(0.0f);
 			verts[i].setFriction(0.01f);
 			verts[i].addForce(0, -9.8f, 0);
@@ -115,6 +115,20 @@ void Cloth::Initialize(int gridSize, float distance, const glm::vec3& position) 
 			spring.setParticles(&verts[i], &verts[j]);
 			bend.push_back(spring);
 		}
+	}
+}
+
+void Cloth::SolveConstraints() {
+	for (int i = 0, size = structural.size(); i < size; ++i) {
+		structural[i].solveConstraints();
+	}
+
+	for (int i = 0, size = shear.size(); i < size; ++i) {
+		shear[i].solveConstraints();
+	}
+
+	for (int i = 0, size = bend.size(); i < size; ++i) {
+		bend[i].solveConstraints();
 	}
 }
 

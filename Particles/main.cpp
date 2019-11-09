@@ -20,8 +20,8 @@ void main(){
 	//===RAYLIB===
 	//// Initialization
 	//--------------------------------------------------------------------------------------
-	const int screenWidth = 800;
-	const int screenHeight = 450;
+	const int screenWidth = 1377;
+	const int screenHeight = 768;
 
 	InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera free");
 
@@ -52,7 +52,7 @@ void main(){
 	ParticleManager ps(0.06f, particles, false);
 	auto particleModel = LoadModelFromMesh(GenMeshSphere(0.07f, 6, 6));
 
-
+	bool constraints = false;
 
 	//=== SPRING ===
 	std::vector<Spring> springs;
@@ -121,7 +121,16 @@ void main(){
 		{
 			simulationMode = SimulationMode::Cloth;
 
-			cloth.Initialize(8, 0.5, glm::vec3(0, 10, 0));
+			cloth.Initialize(24, 0.1, glm::vec3(-1, 8, 0));
+		}
+
+		if (IsKeyDown('O'))
+		{
+			constraints = false;
+		}
+		if (IsKeyDown('P'))
+		{
+			constraints = true;
 		}
 
 		if (IsKeyDown('R'))
@@ -151,19 +160,21 @@ void main(){
 
 			p5->setPosition(4, 6, 0);
 
-			Spring s(20, 0.8f, 1.5f);
+			springs.clear();
+			
+			Spring s(80, 20, 1.5f);
 			s.setParticles(p1, p2);
 			springs.push_back(s);
 
-			Spring s2(20, 0.8f, 1.5f);
+			Spring s2(80, 20, 1.5f);
 			s2.setParticles(p2, p3);
 			springs.push_back(s2);
 
-			Spring s3(20, 0.8f, 1.5f);
+			Spring s3(80, 20, 1.5f);
 			s3.setParticles(p3, p4);
 			springs.push_back(s3);
 
-			Spring s4(20, 0.8f, 1.5f);
+			Spring s4(80, 20, 1.5f);
 			s4.setParticles(p4, p5);
 			springs.push_back(s4);
 		}
@@ -188,10 +199,10 @@ void main(){
 			}
 			//======================
 
-			for (Spring& spring : springs)
-			{
-				spring.solveConstraints();
-			}
+			// for (Spring& spring : springs)
+			// {
+			// 	spring.solveConstraints();
+			// }
 			// === CLOTH UPDATE ===
 		}
 		
@@ -269,10 +280,22 @@ void main(){
 		}
 		//=== OBJECTS RENDERING
 
+		if (simulationMode == SimulationMode::Cloth)
+		{
+			if (constraints)
+			{
+				cloth.SolveConstraints();
+			}
+		}
+		
 		if(simulationMode == SimulationMode::Rope)
 		{
 			for (Spring& spring : springs)
 			{
+				if(constraints)
+				{
+					spring.solveConstraints();
+				}
 				spring.render();
 			}
 		}
