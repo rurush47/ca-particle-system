@@ -6,6 +6,7 @@
 #include "raylib.h"
 #include "camera.h"
 #include "ParticleManager.h"
+#include "Sphere.h"
 
 void main(){
 
@@ -71,7 +72,7 @@ void main(){
 
 	//=== DEFINE SPHERE ==============
 	glm::vec3 sphereCenter(-6, -3, 0);
-	Sphere sphere(sphereCenter, 6);
+	StaticSphere sphere(sphereCenter, 6);
 	//================================
 
 	//=== DEFINE TRIANGLE=============
@@ -87,6 +88,16 @@ void main(){
 	bool collides;
 	glm::vec3 previousPosCorrection;
 	// Main game loop
+
+	//=== RIGIDBODIES ===
+
+	Sphere rSphere;
+	rSphere.radius = 1;
+	rSphere.applyForces();
+	rSphere.position = glm::vec3(0, 5, 0);
+	
+	//===================
+	
 	while (!WindowShouldClose())        // Detect window close button or ESC key
 	{
 		// Update
@@ -107,6 +118,7 @@ void main(){
 
 		//===UPDATE PARTICLES===
 		ps.update(dt, updateMethod);
+		rSphere.update(dt);
 		//======================
 
 
@@ -161,6 +173,7 @@ void main(){
 		}
 
 		//=== OBJECTS RENDERING
+		rSphere.render();
 		sphere.render();
 		triangle.render();
 		//================

@@ -20,6 +20,16 @@ struct Geometry{
 	Mesh genCustomTriangleMesh(const std::vector<Vector3>& customVertices, const int& sides, const float& radius);
 };
 
+typedef struct CollisionManifold
+{
+	bool colliding;
+	glm::vec3 normal;
+	float depth;
+	std::vector<glm::vec3> contacts;
+};
+
+void resetCollisionManifold(CollisionManifold* result);
+
 struct Plane : public Geometry {
 	const float size = 5;
 	glm::vec3 normal;
@@ -58,11 +68,11 @@ public:
 	float getBarycentricProduct(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& v3);
 };
 
-struct Sphere : public Geometry {
+struct StaticSphere : public Geometry {
 	glm::vec3 center;
 	float rad;
-	Sphere(const glm::vec3& point, const float& radius);
-	~Sphere() {}
+	StaticSphere(const glm::vec3& point, const float& radius);
+	~StaticSphere() {}
 	void render();
 	void setPosition(const glm::vec3& newPos);
 	bool isInside(const glm::vec3& point);

@@ -199,6 +199,17 @@ Mesh Geometry::genCustomTriangleMesh(const std::vector<Vector3>& customVertices,
 	return mesh;
 }
 
+void resetCollisionManifold(CollisionManifold* result)
+{
+	if (result != 0)
+	{
+		result->colliding = false;
+		result->normal = glm::vec3(0, 0, 1);
+		result->depth = FLT_MAX;
+		result->contacts.clear();
+	}
+}
+
 void Triangle::render()
 {
 	DrawModel(m_model, Vector3{ 0,0,0 }, 1, YELLOW);
@@ -250,29 +261,29 @@ float Triangle::getBarycentricProduct(const glm::vec3& v1, const glm::vec3& v2, 
 
 
 //****************************************************
-// Sphere
-Sphere::Sphere(const glm::vec3& point, const float& radius)
+// StaticSphere
+StaticSphere::StaticSphere(const glm::vec3& point, const float& radius)
 {
 	center = point;
 	rad = radius;
 }
 
-void Sphere::render()
+void StaticSphere::render()
 {
 	DrawSphere(glmToRaylibVec3(center), rad, RED);
 }
 
-void Sphere::setPosition(const glm::vec3& newPos)
+void StaticSphere::setPosition(const glm::vec3& newPos)
 {
 	center = newPos;
 }
 
-bool Sphere::isInside(const glm::vec3& point)
+bool StaticSphere::isInside(const glm::vec3& point)
 {
 	return glm::dot(point - center, point - center) <= rad * rad;
 }
 
-glm::vec3 Sphere::getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& oldPos)
+glm::vec3 StaticSphere::getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& oldPos)
 {
 	auto vectorDelta = dtPos - oldPos;
 	auto a = glm::dot(vectorDelta, vectorDelta);
@@ -307,13 +318,13 @@ glm::vec3 Sphere::getIntersectionPoint(const glm::vec3& dtPos, const glm::vec3& 
 	return oldPos + u * vectorDelta;
 }
 
-std::pair<glm::vec3, glm::vec3> Sphere::getCollisionProducts(Particle& particle, const glm::vec3& intersectionPoint)
+std::pair<glm::vec3, glm::vec3> StaticSphere::getCollisionProducts(Particle& particle, const glm::vec3& intersectionPoint)
 {
 	Plane tangentPlane(intersectionPoint, glm::normalize(intersectionPoint - center));
 	return tangentPlane.getCollisionProducts(particle.getCurrentPosition(), particle.getVelocity(), particle.getBouncing());
 }
 
-void Sphere::collide(Particle& particle, glm::vec3& previousPosCorrection)
+void StaticSphere::collide(Particle& particle, glm::vec3& previousPosCorrection)
 {
 	const auto intersectionPoint = getIntersectionPoint(particle.getPreviousPosition(), particle.getCurrentPosition());
 	Plane tangentPlane(intersectionPoint, glm::normalize(intersectionPoint - center));
