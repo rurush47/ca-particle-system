@@ -1,4 +1,5 @@
 #include "Sphere.h"
+#include "Geometry.h"
 
 void Sphere::render()
 {

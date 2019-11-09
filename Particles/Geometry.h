@@ -9,8 +9,8 @@
 #include <utility>
 #include "raylib.h"
 #include "Particle.h"
-#include <iosfwd>
 #include <vector>
+#include "Sphere.h"
 
 struct Geometry{
 	virtual void setPosition(const glm::vec3& newPos) = 0;
@@ -81,5 +81,10 @@ struct StaticSphere : public Geometry {
 	void collide(::Particle& particle, glm::vec3& previousPosCorrection);
 	//bool intersecSegment(const glm::vec3& point1, const glm::vec3& point2, glm::vec3& pTall);
 };
+
+void applyImpulse(Rigidbody& rigidbodyA, Rigidbody& rigidbodyB, const CollisionManifold& manifold, int c);
+void applyImpulse(Rigidbody& rigidbodyA, Plane& plane, const CollisionManifold& manifold, int c);
+CollisionManifold findCollisionFeatures(const Sphere& sphereA, const Sphere& sphereB);
+CollisionManifold findCollisionFeatures(Plane& planeA, const Sphere& sphereB);
 
 #endif

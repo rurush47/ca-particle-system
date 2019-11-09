@@ -331,5 +331,148 @@ void StaticSphere::collide(Particle& particle, glm::vec3& previousPosCorrection)
 	tangentPlane.collide(particle, previousPosCorrection);
 }
 
+void applyImpulse(Rigidbody& rigidbodyA, Rigidbody& rigidbodyB, const CollisionManifold& manifold, int c)
+{
+	float invMass1 = rigidbodyA.invMass();
+	float invMass2 = rigidbodyB.invMass();
+	float invMassSum = invMass1 + invMass2;
+	if (invMassSum == 0.0f) { return; }
+
+	glm::vec3 relativeV = rigidbodyB.velocity - rigidbodyA.velocity;
+	glm::vec3 relativeNorm = manifold.normal;
+
+	//do nothing if objects are moving away from each other
+	if (glm::dot(relativeV, relativeNorm) > 0.0f)
+	{
+		return;
+	}
+
+	float e = glm::min(rigidbodyA.cor, rigidbodyB.cor);
+	float numerator = -(1.0 + e) * glm::dot(relativeV, relativeNorm);
+	//j - magnitute of the impulse
+	float j = numerator / invMassSum;
+
+	if (manifold.contacts.size() > 0.0f && j != 0.0f)
+	{
+		j /= float(manifold.contacts.size());
+	}
+
+	glm::vec3 impulse = relativeNorm * j;
+	rigidbodyA.velocity = rigidbodyA.velocity - impulse * invMass1;
+	rigidbodyB.velocity = rigidbodyB.velocity - impulse * invMass2;
+
+	//Friction
+	glm::vec3 tangent = relativeV - (relativeNorm * glm::dot(relativeV, relativeNorm));
+	if (glm::abs(glm::length(tangent)) < 0.01f)
+	{
+		return;
+	}
+
+	tangent = glm::normalize(tangent);
+
+	//jt - friction magnitude
+	numerator = -glm::dot(relativeV, tangent);
+	float jt = numerator / invMassSum;
+	if (manifold.contacts.size() > 0.0f && jt != 0.0f)
+	{
+		jt /= float(manifold.contacts.size());
+	}
+	if (glm::abs(jt) < 0.01f)
+	{
+		return;
+	}
+
+	//clamp	the	magnitude of friction to between j * friction and j * friction, as shown. Coulomb's Law:
+	float friction = glm::sqrt(rigidbodyA.friction * rigidbodyB.friction);
+	if (jt > j* friction)
+	{
+		jt = j * friction;
+	}
+	else if (jt < -j * friction)
+	{
+		jt = -j * friction;
+	}
+
+	//apply friction
+	glm::vec3 tangentImpulse = tangent * jt;
+
+	rigidbodyA.velocity -= tangentImpulse * invMass1;
+	rigidbodyB.velocity += tangentImpulse * invMass2;
+}
+
+void applyImpulse(Rigidbody& rigidbodyA, Plane& plane, const CollisionManifold& manifold, int c)
+{
+	float invMass = rigidbodyA.invMass();
+
+	glm::vec3 relativeV = rigidbodyA.velocity;
+	glm::vec3 relativeNorm = manifold.normal;
+
+	float e = rigidbodyA.cor;
+	float numerator = -(1.0 + e) * glm::dot(relativeV, relativeNorm);
+	//j - magnitute of the impulse
+	float j = numerator / invMass;
+
+	if (manifold.contacts.size() > 0.0f && j != 0.0f)
+	{
+		j /= float(manifold.contacts.size());
+	}
+
+	glm::vec3 impulse = relativeNorm * j;
+	rigidbodyA.velocity = rigidbodyA.velocity + impulse * invMass;
+
+	//TODO Friction
+}
+
+CollisionManifold findCollisionFeatures(const Sphere& sphereA, const Sphere& sphereB)
+{
+	CollisionManifold result;
+	resetCollisionManifold(&result);
+
+	float r = sphereA.radius + sphereB.radius;
+	float distance = glm::distance(sphereB.position, sphereA.position);
+
+	if (distance >= r)
+	{
+		return result;
+	}
+
+	glm::vec3 diffVector = sphereB.position - sphereA.position;
+	glm::vec3 n = glm::normalize(diffVector);
+	result.colliding = true;
+	result.normal = n;
+	result.depth = glm::abs(glm::length(diffVector) - r) * 0.5f;
+
+	float distanceToIntersectionPoint = sphereA.radius - result.depth;
+	glm::vec3 contact = sphereA.position + diffVector * distanceToIntersectionPoint;
+	result.contacts.push_back(contact);
+
+	return result;
+}
+
+CollisionManifold findCollisionFeatures(Plane& planeA, const Sphere& sphereB)
+{
+	CollisionManifold result;
+	resetCollisionManifold(&result);
+
+	glm::vec3 closestPoint = planeA.closestPointInPlane(sphereB.position);
+	float distance = glm::distance(closestPoint, sphereB.position);
+	if (distance >= sphereB.radius)
+	{
+		return result;
+	}
+
+	glm::vec3 normal = glm::normalize(sphereB.position - closestPoint);
+
+	glm::vec3 outsidePoint = sphereB.position - normal * sphereB.radius;
+	float collisionDistance = glm::length(closestPoint - outsidePoint);
+	result.colliding = true;
+	glm::vec3 contact = closestPoint + (outsidePoint - closestPoint) * 0.5f;
+	result.contacts.push_back(contact);
+	result.normal = normal;
+	result.depth = collisionDistance * 0.5;
+
+	return result;
+}
+
 //****************************************************
 

@@ -121,7 +121,18 @@ void main(){
 		rSphere.update(dt);
 		//======================
 
+		for (Plane& plane : planes)
+		{
+			CollisionManifold c;
+			resetCollisionManifold(&c);
 
+			c = findCollisionFeatures(plane, rSphere);
+			if(c.colliding)
+			{
+				applyImpulse(rSphere, plane, c, 0);
+			}
+		}
+		
 		for (Particle& particle : *particles.get())
 		{
 			collides = false;
