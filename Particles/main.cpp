@@ -4,7 +4,6 @@
 #include "Particle.h"
 #include "Geometry.h"
 #include "raylib.h"
-#include "camera.h"
 #include "ParticleManager.h"
 #include "Grid.h"
 
@@ -96,6 +95,10 @@ void main(){
 	Grid grid(10, 10, 1, Vector3{-6, 0, -6});
 
 	bool collision = false;
+
+	int clickCounter = 0;
+	Coords firstClick;
+	Coords secondClick;
 	
 	while (!WindowShouldClose())        // Detect window close button or ESC key
 	{
@@ -113,14 +116,57 @@ void main(){
 				// Check collision between ray and box
 				auto collisionInfo = GetCollisionRayGround(ray, 0);
 				auto coords = grid.getCoordAtPosition(collisionInfo.position);
-				
+
+				//=== DEBUG ===
 				std::cout << std::to_string(collisionInfo.position.x) + " "
 				+ std::to_string(collisionInfo.position.y) + " " +
 					std::to_string(collisionInfo.position.z) << std::endl;
 
 				std::cout << std::to_string(coords.x) + " " + std::to_string(coords.y) << std::endl;
+				//============
+
+				grid.onLeftClick(coords);
 			}
 			else collision = false;
+		}
+
+		if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
+		{
+			ray = GetMouseRay(GetMousePosition(), camera);
+			auto collisionInfo = GetCollisionRayGround(ray, 0);
+			auto coords = grid.getCoordAtPosition(collisionInfo.position);
+			
+			if (clickCounter == 0)
+			{
+				
+				Cell* cell = grid.getCell(coords);
+				if(cell != nullptr)
+				{
+					grid.reset();
+
+					cell->setColor(GREEN);
+					
+					firstClick = coords;
+					++clickCounter;
+				}
+				
+			}
+			else if (clickCounter == 1)
+			{
+				Cell* gcell = grid.getCell(coords);
+				if (gcell != nullptr)
+				{
+					secondClick = coords;
+
+					auto path = grid.aStar(firstClick, secondClick);
+					for (Cell* cell : path)
+					{
+						cell->setColor(YELLOW);
+					}
+
+					clickCounter = 0;
+				}
+			}
 		}
 		
 		if (IsKeyDown('Z')) camera.target = *new Vector3{ 0.0f, 0.0f, 0.0f };
